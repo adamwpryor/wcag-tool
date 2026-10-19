@@ -38,7 +38,11 @@ def _parser() -> argparse.ArgumentParser:
     fix.add_argument("path", type=Path)
     fix.add_argument("--apply", action="append", default=[], metavar="FIX_ID")
     fix.add_argument("--output", type=Path, default=None)
-    fix.add_argument("--language", default="en-US")
+    fix.add_argument(
+        "--language",
+        default=None,
+        help="language code for set-language (en-US, es-ES); without it the fix is held",
+    )
 
     demo = sub.add_parser("demo", help="write fictional files with known defects into a folder")
     demo.add_argument("directory", type=Path)

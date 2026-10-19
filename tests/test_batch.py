@@ -33,8 +33,11 @@ def test_markdown_has_the_skill_table_and_the_claim(demo_dir: Path) -> None:
     batch = engine.scan_folder(demo_dir)
     text = render_markdown(batch)
     assert (
-        "| File | Finding | Criterion | Route | Owner (a name) | Closure needed | Draft? |" in text
+        "| File | Finding | Criterion | Route | Owner (a name) | Closure needed | Next step |"
+        in text
     )
+    assert "ask author what it shows" in text
+    assert "confirm, then apply" in text
     assert "## Route 5: fix once at the source" in text
     assert "## Not evaluated" in text
     assert "not a conformance claim" in text
@@ -45,7 +48,11 @@ def test_markdown_has_the_skill_table_and_the_claim(demo_dir: Path) -> None:
 def test_batch_dict_carries_markdown(demo_dir: Path) -> None:
     data = engine.scan_folder(demo_dir).to_dict()
     assert data["files"] == 5
-    assert data["markdown"].startswith("# Triage: 5 files")
+    assert data["formats"] == {"docx": 3, "pptx": 1, "pdf": 1}
+    assert data["evaluated"] and data["not_evaluated"]
+    header = data["markdown"].splitlines()[0]
+    assert header.startswith("# Triage: 5 files (")
+    assert "3 docx" in header and "1 pptx" in header and "1 pdf" in header
     assert data["systemic"] and all(s["route"] == 5 for s in data["systemic"])
 
 

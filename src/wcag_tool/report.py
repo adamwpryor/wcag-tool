@@ -135,32 +135,60 @@ class Batch:
                 counts[route] += n
         return counts
 
-    def not_evaluated(self) -> list[str]:
-        """The union of every file's not-evaluated list, in first-seen order."""
+    @staticmethod
+    def _union(lists: list[list[str]]) -> list[str]:
         seen: list[str] = []
-        for report in self.reports:
-            for item in report.not_evaluated:
+        for items in lists:
+            for item in items:
                 if item not in seen:
                     seen.append(item)
         return seen
+
+    def not_evaluated(self) -> list[str]:
+        """The union of every file's not-evaluated list, in first-seen order."""
+        return self._union([r.not_evaluated for r in self.reports])
+
+    def evaluated(self) -> list[str]:
+        """The union of every file's evaluated list, in first-seen order."""
+        return self._union([r.evaluated for r in self.reports])
+
+    def formats(self) -> dict[str, int]:
+        """How many files of each format were scanned."""
+        counts: dict[str, int] = {}
+        for report in self.reports:
+            counts[report.format] = counts.get(report.format, 0) + 1
+        return counts
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to plain types, including the rendered Markdown."""
         return {
             "files": len(self.reports),
+            "formats": self.formats(),
             "skipped": list(self.skipped),
             "counts_by_route": self.counts_by_route(),
             "systemic": [s.to_dict() for s in self.systemic()],
             "reports": [r.to_dict() for r in self.reports],
+            "evaluated": self.evaluated(),
             "not_evaluated": self.not_evaluated(),
             "bounded_claim": BOUNDED_CLAIM,
             "markdown": render_markdown(self),
         }
 
 
+def _next_step(finding: Finding) -> str:
+    """What the last table column says: who moves next, and how."""
+    if finding.route == Route.AUTO_FIX:
+        return "tool"
+    if "missing-alt" in finding.check:
+        return "ask author what it shows"
+    if finding.fix_id:
+        return "confirm, then apply"
+    return "author edits"
+
+
 def _row(asset: str, finding: Finding) -> str:
     closure = finding.closure_required.value.replace("_", " ")
-    draft = "yes" if finding.proposal else ("tool" if finding.fix_id else "")
+    draft = _next_step(finding)
     summary = _SENTENCE_END.split(finding.evidence, maxsplit=1)[0].rstrip(".")
     return (
         f"| {asset} | {finding.check} — {summary} | {finding.criterion} | {int(finding.route)} | "
@@ -180,23 +208,29 @@ def render_markdown(batch: Batch) -> str:
     lines: list[str] = []
     n_files = len(batch.reports)
     counts = batch.counts_by_route()
-    lines.append(f"# Triage: {n_files} file{'s' if n_files != 1 else ''}")
+    formats = ", ".join(f"{n} {fmt}" for fmt, n in batch.formats().items())
+    skipped = f"; {len(batch.skipped)} skipped" if batch.skipped else ""
+    lines.append(f"# Triage: {n_files} file{'s' if n_files != 1 else ''} ({formats}{skipped})")
     lines.append("")
     lines.append(
         "Findings by route: "
         + " · ".join(f"Route {r}: {n}" for r, n in counts.items())
-        + ". Owner column is blank on purpose: it wants a name."
+        + ". Routes 3 and 4 are always 0 here: the tool cannot see them, a person adds them. "
+        + "Owner column is blank on purpose: it wants a name."
     )
     lines.append("")
     lines.append(
-        "| File | Finding | Criterion | Route | Owner (a name) | Closure needed | Draft? |"
+        "| File | Finding | Criterion | Route | Owner (a name) | Closure needed | Next step |"
     )
-    lines.append("| :--- | :--- | :--- | :-: | :--- | :--- | :-: |")
+    lines.append("| :--- | :--- | :--- | :-: | :--- | :--- | :--- |")
     for report in batch.reports:
         for finding in report.findings:
             lines.append(_row(report.asset, finding))
     if not any(r.findings for r in batch.reports):
-        lines.append("| | no findings in the evaluated criteria | | | | | |")
+        lines.append(
+            "| | nothing found in the criteria evaluated; the not-evaluated list below still "
+            "applies | | | | | |"
+        )
 
     systemic = batch.systemic()
     lines.append("")

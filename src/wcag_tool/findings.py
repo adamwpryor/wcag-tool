@@ -150,17 +150,22 @@ class Report:
 
 ROUTES_SUMMARY = """Five routes. The route is decided by what the fix needs, not by how easy it is.
 
-1. Deterministic defect -> automatic or templated repair. The rule is deterministic, the
-   repair invents no meaning, it is reversible, and it cannot silently alter an assessment.
+1. Deterministic defect -> automatic repair. The rule is deterministic, the repair invents
+   no meaning, it is reversible and re-scannable, and it cannot silently alter an assessment.
+   In this tool: document title, and document language once a person names it.
 2. Machine finding -> content-owner review. The tool found a likely problem but cannot
-   establish its meaning: alt text, link purpose, headings, table structure, reading order.
-   The tool may propose; a person closes.
-3. Interaction defect -> manual task testing. Keyboard, focus, screen-reader announcements.
-   Tested against a named task, never a general impression.
+   establish its meaning: alt text, link purpose, headings, table structure. The tool may
+   propose; the person who made the file confirms.
+3. Interaction defect -> manual task testing. Keyboard, focus, reading order, screen-reader
+   announcements. Tested against a named task, never a general impression. The tool never
+   emits Route 3; a person adds those rows.
 4. High-impact or time-sensitive -> expedited review. A currently enrolled student, a
-   high-stakes task, accommodation information. Overrides the other routes.
-5. Recurring systemic defect -> template or procurement control. Fix the source once.
+   high-stakes task, accommodation information. Overrides the other routes. The tool never
+   emits Route 4; a person overwrites the route for the file that needs it.
+5. Recurring systemic defect -> template or source. Fix it once where the copies come from.
+   scan_folder lists candidates.
 
 Four closure states: automatically_verified, content_owner_verified, expert_verified,
-user_task_verified. "No longer reported by the scanner" is not one of them.
+user_task_verified. Closure is recorded by a person. "No longer reported by the scanner"
+is not one of them.
 """

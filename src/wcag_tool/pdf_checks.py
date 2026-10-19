@@ -168,7 +168,9 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
             metadata = {k: current.get(k, "") for k in _WRITABLE_METADATA}
             metadata["title"] = title
             doc.set_metadata(metadata)
-            applied[fix_id] = f"title set to {title!r}"
+            applied[fix_id] = (
+                f"title set to {title!r} from the file name; check it reads as a title"
+            )
         elif fix_id == "set-language":
             doc.xref_set_key(doc.pdf_catalog(), "Lang", f"({language})")
             applied[fix_id] = f"language set to {language}"

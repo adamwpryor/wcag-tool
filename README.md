@@ -61,8 +61,11 @@ confirming the proposal.
 ```bash
 wcag-tool demo ./sample            # five fictional files with known defects
 wcag-tool scan ./sample            # the routed table as Markdown; --json for the data
-wcag-tool fix ./sample/syllabus_section_01.docx --apply mark-header-row:0
+wcag-tool fix ./sample/syllabus_section_01.docx --language en-US --apply mark-header-row:0
 ```
+
+Without `--language` the language fix is held and reported, not guessed. The tool never writes a
+fact nobody stated.
 
 ### 2. The skill, in any assistant
 

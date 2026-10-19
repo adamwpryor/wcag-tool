@@ -46,20 +46,26 @@ def fix_document(
     path: str,
     apply: list[str] | None = None,
     output_path: str | None = None,
-    language: str = "en-US",
+    language: str | None = None,
 ) -> dict[str, Any]:
     """Write a remediated copy of the file and a JSON record of before and after.
 
-    Route 1 fixes (document title, document language) are applied by default.
+    Route 1 fixes are applied by default: the document title, and the document
+    language once a person has named it (set-language is held and reported
+    under `held` until `language` is given; the tool never guesses a language).
     Fixes attached to Route 2 findings, such as mark-header-row:0 or
     apply-heading:12:2, are applied only when named in `apply`, after a person
-    has confirmed the proposal. The original is never overwritten.
+    has confirmed the proposal; an id that matches no finding is returned in
+    `unknown_fix_ids` and not applied. The original is never overwritten. Read
+    back `applied`, `failed`, `unknown_fix_ids` and `held` before reporting.
 
     Args:
         path: The file to remediate.
-        apply: Extra fix ids to apply, taken from a prior scan_document result.
+        apply: Fix ids a person has confirmed, taken from a prior scan result.
         output_path: Where to write the copy. Defaults to <name>.remediated.<ext>.
-        language: Language code for set-language, e.g. en-US or es-ES.
+            Leave it unset; it must never be the original.
+        language: Language code for set-language, e.g. en-US or es-ES, as named
+            by the person who owns the file.
     """
     return engine.fix(
         Path(path),

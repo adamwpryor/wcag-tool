@@ -14,11 +14,11 @@ read out every time; it is the part people skip and the part that keeps the clai
 | Check | Criterion | Route | Fix |
 | :--- | :--- | :-: | :--- |
 | Document title property empty | 2.4.2 | 1 | `set-title` — uses the first Heading 1, else the file name made readable |
-| No default document language | 3.1.1 | 1 | `set-language` — defaults to en-US; pass another code for other languages |
+| No default document language | 3.1.1 | 1 | `set-language` — only with the language the owner names (`en-US`, `es-ES`); the tool never guesses one |
 | Image with no alt text, or alt text that is a filename or an auto-generated phrase | 1.1.1 | 2 | Draft one sentence, or offer "decorative". Author confirms |
-| Bold short line used as a heading | 1.3.1 | 2 | `apply-heading:<paragraph>:<level>` — only after the author says it is a heading |
-| No heading styles in a long document | 2.4.6 | 2 | Author marks the section titles |
-| Heading level skipped (1 → 3) | 1.3.1 | 2 | Author chooses: fix the level or restructure |
+| Bold short line used as a heading | 1.3.1 | 2 | `apply-heading:<paragraph>:<level>` — the tool proposes level 2; the author confirms both that it is a heading and the level, and the id is passed with the level they named |
+| No heading styles in a long document | 2.4.6 | 2 | Author marks the section titles; no tool fix |
+| Heading level skipped (1 → 3) | 1.3.1 | 2 | Author chooses: fix the level or restructure; no tool fix |
 | Empty heading (a Heading style with no text) | 2.4.6 | 2 | Author deletes it or gives it the section's title |
 | Table with no header row marked | 1.3.1 | 2 | `mark-header-row:<table>` — only if the first row really holds column names |
 | Link text that says nothing ("click here", a bare URL) | 2.4.4 | 2 | Author replaces it with the destination's name |
@@ -47,18 +47,19 @@ should hear.
 
 | Check | Criterion | Route | Fix |
 | :--- | :--- | :-: | :--- |
-| Title metadata empty | 2.4.2 | 1 | `set-title` |
-| No document language | 3.1.1 | 1 | `set-language` |
+| Title metadata empty | 2.4.2 | 1 | `set-title` — from the file name, since the tool does not read a PDF's structure; glance at the result |
+| No document language | 3.1.1 | 1 | `set-language` — only with the language the owner names |
 | File is not tagged at all | 1.3.1 | 2 | **None in this tool.** Re-export from the source file after fixing it there. If there is no source, the file needs Acrobat's auto-tag followed by a human check |
 | Pages are images with no text | 1.1.1 | 2 | Find the original, or OCR and then check the recognised text against the page |
 
 **Not evaluated in PDF:** alt text on figures · the order of the tag tree · headings, lists and
 tables inside the tag tree · bookmarks · contrast · form fields.
 
-**Say this about PDFs, in these words or tighter:** *A PDF is the end of the line, not the place
-to fix things. The fastest honest path is back to the Word or PowerPoint file, fix it there, and
-export again. If that file is gone, the PDF needs a person with Acrobat, and the tool will not
-pretend otherwise.*
+**The PDF passage. Say this, word for word or shorter, whenever an untagged PDF comes up:**
+*A PDF is the end of the line, not the place to fix things. The fastest honest path is back to the
+Word or PowerPoint file, fix it there, and export again. If that file is gone, the PDF needs a
+person with Acrobat, and the tool will not pretend otherwise.* The tool's own `proposal` on the
+finding says the same in fewer words; the passage above is the one you read aloud.
 
 ## The canonical honesty rule
 

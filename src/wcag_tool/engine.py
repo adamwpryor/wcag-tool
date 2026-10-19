@@ -134,56 +134,101 @@ def scan_folder(folder: Path, recursive: bool = True) -> Batch:
     return scan_many(iter_supported(folder, recursive=recursive))
 
 
+def _same_fix(requested: str, carried: str) -> bool:
+    """True when a requested id names the fix a finding carries.
+
+    ``apply-heading:<paragraph>:<level>`` matches on the paragraph alone, so a
+    person can confirm a heading at a different level than the one proposed.
+    """
+    if requested == carried:
+        return True
+    r, c = requested.split(":"), carried.split(":")
+    return r[0] == c[0] == "apply-heading" and len(r) == len(c) == 3 and r[1] == c[1]
+
+
+def _open_finding(finding: Any) -> dict[str, Any]:
+    return {
+        "check": finding.check,
+        "criterion": finding.criterion,
+        "locator": finding.locator,
+        "route": int(finding.route),
+        "closure_required": finding.closure_required.value,
+        "fix_id": finding.fix_id,
+        "proposal": finding.proposal,
+    }
+
+
 def fix(
     path: Path,
     apply: list[str] | None = None,
     output: Path | None = None,
-    language: str = "en-US",
+    language: str | None = None,
 ) -> dict[str, Any]:
     """Apply fixes to a copy of the file, re-scan it, and write a record.
 
-    Route 1 fixes are applied by default. Any fix carried by a Route 2 finding is
-    applied only when its ``fix_id`` appears in ``apply``, because it asserts
-    something about the author's meaning that a person has to confirm first.
+    Route 1 fixes are applied by default, with one exception: ``set-language``
+    is held until a person names the language, because writing ``en-US`` into a
+    file nobody has looked at invents a fact. Any fix carried by a Route 2
+    finding is applied only when its ``fix_id`` appears in ``apply``.
 
     Args:
         path: The original file. Never overwritten.
-        apply: Fix ids to apply in addition to the Route 1 defaults. Pass ``[]``
-            to apply only the defaults.
+        apply: Fix ids a person has confirmed, taken from a prior scan. Pass
+            ``[]`` or nothing to apply only the Route 1 defaults.
         output: Where to write the copy. Defaults to ``<stem>.remediated<suffix>``.
-        language: Language code for ``set-language``.
+            Must not be the original.
+        language: Language code for ``set-language`` (``en-US``, ``es-ES``). When
+            omitted, ``set-language`` is reported under ``held`` and left open.
 
     Returns:
-        A dict with the output path, the record path, what was applied, what
-        failed, what was skipped as needing a person, and the before and after reports.
+        A record: paths, ``applied``, ``failed``, ``unknown_fix_ids``, ``held``,
+        ``needs_person`` (every finding still open after the fix), and the before
+        and after reports.
+
+    Raises:
+        ValueError: If ``output`` resolves to the original file.
     """
     before = scan(path)
     _, fixer = _handlers(path)
-    requested = set(apply or [])
+    requested = list(dict.fromkeys(apply or []))
+
+    out = output or path.with_name(f"{path.stem}.remediated{path.suffix}")
+    if out.resolve() == path.resolve():
+        raise ValueError("output must differ from the original; the original is never overwritten")
 
     to_apply: list[str] = []
-    needs_person: list[dict[str, Any]] = []
+    held: list[dict[str, Any]] = []
+    matched: set[str] = set()
     for finding in before.findings:
         if finding.fix_id is None:
             continue
-        if finding.route == Route.AUTO_FIX or finding.fix_id in requested:
-            to_apply.append(finding.fix_id)
-        else:
-            needs_person.append({"fix_id": finding.fix_id, "proposal": finding.proposal})
-    known = {f.fix_id for f in before.findings if f.fix_id}
-    unknown = sorted(requested - known)
+        chosen = next((r for r in requested if _same_fix(r, finding.fix_id)), None)
+        if chosen is not None:
+            matched.add(chosen)
+        if finding.fix_id == "set-language" and language is None:
+            held.append(
+                {
+                    "fix_id": "set-language",
+                    "reason": "no language named; pass language='en-US' or another code",
+                }
+            )
+            continue
+        if finding.route == Route.AUTO_FIX or chosen is not None:
+            to_apply.append(chosen or finding.fix_id)
+    unknown = [r for r in requested if r not in matched]
 
-    out = output or path.with_name(f"{path.stem}.remediated{path.suffix}")
-    result = fixer(path, to_apply, out, language)
+    result = fixer(path, to_apply, out, language or "en-US")
     after = scan(out)
 
     record = {
         "original": str(path),
         "output": str(out),
+        "language": language,
         "applied": result["applied"],
         "failed": result["failed"],
         "unknown_fix_ids": unknown,
-        "needs_person": needs_person,
+        "held": held,
+        "needs_person": [_open_finding(f) for f in after.findings],
         "before": before.to_dict(),
         "after": after.to_dict(),
     }

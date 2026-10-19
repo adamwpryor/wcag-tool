@@ -41,10 +41,13 @@ def test_server_over_stdio_subprocess(bad_pdf: Path) -> None:
         async with Client(params) as client:
             tools = await client.list_tools()
             assert {t.name for t in tools.tools} == EXPECTED_TOOLS
-            result = await client.call_tool("fix_document", {"path": str(bad_pdf)})
+            result = await client.call_tool(
+                "fix_document", {"path": str(bad_pdf), "language": "en-US"}
+            )
             assert not result.is_error
             data = _structured(result)
             assert set(data["applied"]) == {"set-title", "set-language"}
+            assert data["held"] == [] and data["unknown_fix_ids"] == []
             assert Path(data["output"]).exists()
 
     asyncio.run(run())
