@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+
+# Build transport between machines (mode 700, hash-verified, deleted after use)
+.scratch/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Built skill set — regenerate with `python tools/build_skill.py`
+dist/
+
+# Never commit a real course file. Tests generate their own fixtures in tmp_path.
+*.docx
+*.pptx
+*.pdf
+*.remediated.*
+*.remediation.json

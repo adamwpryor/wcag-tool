@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wcag-tool"
+version = "0.1.0"
+description = "Finds WCAG 2.1 AA problems in course documents (DOCX, PPTX, PDF), fixes the deterministic ones, routes the rest to a person, and never claims conformance."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Adam Pryor" }]
+keywords = ["accessibility", "wcag", "mcp", "docx", "pptx", "pdf", "higher-education"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Education",
+]
+dependencies = [
+  "mcp>=2.0",
+  "python-docx>=1.1",
+  "python-pptx>=1.0",
+  "pymupdf>=1.24",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff", "black", "mypy"]
+
+[project.scripts]
+wcag-tool = "wcag_tool.server:main"
+
+[project.urls]
+Homepage = "https://github.com/adamwpryor/wcag-tool"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+packages = ["wcag_tool"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
