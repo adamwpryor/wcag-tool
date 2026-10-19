@@ -17,7 +17,8 @@ from wcag_tool.findings import Closure, Confidence, Finding, Report, Route
 
 EVALUATED = [
     "1.1.1 Non-text Content (alt text present and not a filename or auto-generated phrase)",
-    "1.3.1 Info and Relationships (every slide has a title placeholder with text)",
+    "1.3.1 Info and Relationships (every slide has a title placeholder with text; tables have a "
+    "header row)",
     "2.4.2 Page Titled (presentation title)",
 ]
 
@@ -26,7 +27,6 @@ NOT_EVALUATED = [
     "can judge it",
     "1.4.3 Contrast: not analyzed yet",
     "1.2.x Audio and video: embedded media captions are not analyzed",
-    "Tables: header rows in slide tables are not analyzed yet",
 ]
 
 
@@ -81,7 +81,26 @@ def scan(path: Path) -> Report:
                     ),
                 )
             )
-        for shape in slide.shapes:
+        for shape_index, shape in enumerate(slide.shapes):
+            if shape.has_table and not shape.table.first_row:
+                f.append(
+                    Finding(
+                        check="pptx.table-no-header",
+                        criterion="1.3.1 Info and Relationships",
+                        asset=asset,
+                        locator=f"slide {number}, {shape.name}",
+                        evidence="The table has no header row marked.",
+                        route=Route.CONTENT_OWNER,
+                        closure_required=Closure.CONTENT_OWNER_VERIFIED,
+                        confidence=Confidence.HIGH,
+                        fix_id=f"mark-header-row:{number}:{shape_index}",
+                        proposal=(
+                            "If the first row holds column names, mark it as the header row. "
+                            "If the table is used for layout, replace it with text boxes."
+                        ),
+                    )
+                )
+                continue
             if shape.shape_type != MSO_SHAPE_TYPE.PICTURE:
                 continue
             c_nv_pr = shape._element.xpath(".//p:cNvPr")
@@ -132,7 +151,18 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
     applied: dict[str, str] = {}
     failed: dict[str, str] = {}
     for fix_id in fix_ids:
-        if fix_id == "set-title":
+        name, _, args = fix_id.partition(":")
+        if name == "mark-header-row":
+            try:
+                slide_no, shape_index = (int(x) for x in args.split(":"))
+                shape = list(prs.slides)[slide_no - 1].shapes[shape_index]
+                if not shape.has_table:
+                    raise ValueError("not a table")
+                shape.table.first_row = True
+                applied[fix_id] = f"slide {slide_no}: header row marked on {shape.name}"
+            except (ValueError, IndexError) as exc:
+                failed[fix_id] = f"{type(exc).__name__}: {exc}"
+        elif fix_id == "set-title":
             first = next(
                 (
                     s.shapes.title.text.strip()

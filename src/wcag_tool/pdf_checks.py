@@ -25,7 +25,7 @@ NOT_EVALUATED = [
     "1.1.1 alt text on figures: requires walking the structure tree; not analyzed yet",
     "1.3.2 Meaningful Sequence: tag order vs visual order needs a person with a screen reader",
     "Tables, headings and bookmarks inside the tag tree: not analyzed yet",
-    "1.4.3 Contrast: not analyzed",
+    "1.4.3 Contrast: not analyzed yet",
 ]
 
 _SAMPLE_PAGES = 3

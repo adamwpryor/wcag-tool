@@ -49,10 +49,20 @@ Claude Desktop configuration, for example:
 }
 ```
 
-Three tools: `scan_document(path)`, `fix_document(path, apply=[...])`, `describe_routes()`.
-`fix_document` writes a copy next to the original and a JSON record of before and after. The
+Four tools: `scan_document(path)`, `scan_folder(path)`, `fix_document(path, apply=[...])`,
+`describe_routes()`. `scan_folder` is the one to start with: it adds Route 5 candidates (a defect
+that recurs across files, so the fix is the template) and returns the routed table ready to fill
+in. `fix_document` writes a copy next to the original and a JSON record of before and after. The
 original is never overwritten. Route 2 fixes are applied only when you name their `fix_id` after
 confirming the proposal.
+
+**No MCP client? The same engine runs from the command line.**
+
+```bash
+wcag-tool demo ./sample            # five fictional files with known defects
+wcag-tool scan ./sample            # the routed table as Markdown; --json for the data
+wcag-tool fix ./sample/syllabus_section_01.docx --apply mark-header-row:0
+```
 
 ### 2. The skill, in any assistant
 

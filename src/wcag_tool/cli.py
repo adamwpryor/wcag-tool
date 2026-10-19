@@ -1,0 +1,99 @@
+"""Command line: the same engine for people without an MCP client.
+
+``wcag-tool`` with no arguments starts the MCP server over stdio, which is what
+an MCP client's configuration expects. Subcommands run the engine directly and
+write the result to stdout.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+
+from wcag_tool import __version__, engine, log
+from wcag_tool.demo import make_demo_set
+from wcag_tool.report import render_markdown
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="wcag-tool",
+        description=(
+            "Accessibility triage for course documents (DOCX, PPTX, PDF). "
+            "With no subcommand, starts the MCP server over stdio."
+        ),
+    )
+    parser.add_argument("--version", action="version", version=f"wcag-tool {__version__}")
+    sub = parser.add_subparsers(dest="command")
+
+    scan = sub.add_parser("scan", help="scan a file or a folder and print the routed table")
+    scan.add_argument("path", type=Path)
+    scan.add_argument("--json", action="store_true", help="print JSON instead of Markdown")
+    scan.add_argument("--no-recursive", action="store_true", help="do not descend into subfolders")
+
+    fix = sub.add_parser("fix", help="write a remediated copy of one file and a JSON record")
+    fix.add_argument("path", type=Path)
+    fix.add_argument("--apply", action="append", default=[], metavar="FIX_ID")
+    fix.add_argument("--output", type=Path, default=None)
+    fix.add_argument("--language", default="en-US")
+
+    demo = sub.add_parser("demo", help="write fictional files with known defects into a folder")
+    demo.add_argument("directory", type=Path)
+
+    sub.add_parser("serve", help="start the MCP server over stdio (the default)")
+    return parser
+
+
+def _write(text: str) -> None:
+    sys.stdout.write(text)
+    if not text.endswith("\n"):
+        sys.stdout.write("\n")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Entry point.
+
+    Args:
+        argv: Arguments without the program name. Defaults to ``sys.argv[1:]``.
+
+    Returns:
+        Process exit code.
+    """
+    args = _parser().parse_args(argv)
+    log.configure(logging.INFO)
+
+    if args.command in (None, "serve"):
+        from wcag_tool.server import mcp
+
+        mcp.run()
+        return 0
+
+    try:
+        if args.command == "scan":
+            if args.path.is_dir():
+                batch = engine.scan_folder(args.path, recursive=not args.no_recursive)
+            else:
+                batch = engine.scan_many([args.path])
+            _write(json.dumps(batch.to_dict(), indent=2) if args.json else render_markdown(batch))
+            return 0
+        if args.command == "fix":
+            record = engine.fix(
+                args.path, apply=args.apply or None, output=args.output, language=args.language
+            )
+            _write(json.dumps(record, indent=2))
+            return 0
+        if args.command == "demo":
+            for path in make_demo_set(args.directory):
+                _write(str(path))
+            return 0
+    except (FileNotFoundError, engine.UnsupportedFormatError) as exc:
+        sys.stderr.write(f"wcag-tool: {exc}\n")
+        return 2
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

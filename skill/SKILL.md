@@ -43,16 +43,20 @@ Ask these one per turn, and wait for each answer.
 
 1. *What files are we looking at — roughly how many, and in which formats (Word, PowerPoint, PDF)?*
 2. *Is any of this in front of a currently enrolled student with an accommodation right now, or
-   due to a student within two weeks?* If yes, that file is Route 4 and goes first.
+   due to a student within two weeks?* If yes, that file is Route 4 and goes first. Do not ask who
+   the student is; you never need a name.
 3. *For each PDF, do you still have the Word or PowerPoint file it came from?* A PDF with a source
    is fixed at the source and re-exported. A PDF without one is a different and slower job, and
    you say so now rather than later.
 
 ### 2. The scan
 
-**If the wcag-tool is connected** (you have `scan_document`, `fix_document` and
-`describe_routes`), run `scan_document` on each file and work from the report. Do not paraphrase
-the report into a score. Read out the counts by route and the `not_evaluated` list.
+**If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document` and
+`describe_routes`), run `scan_folder` on the folder when there is more than one file, otherwise
+`scan_document` on the file, and work from the result. `scan_folder` returns a `markdown` field
+holding the routed table already laid out; use it as the §3 table and fill in the owner names. Do
+not paraphrase the report into a score. Read out the counts by route, the Route 5 lines, and the
+`not_evaluated` list.
 
 **If no tool is connected**, ask for the file or its contents, and check it against
 `references/checks.md` by eye. Say which checks you could not do without the file open in its
@@ -123,3 +127,6 @@ say that in the first sentence, then say what the fastest honest path is.
   the web, and say that video needs captions and a transcript rather than any of this.
 - *Legal exposure, deadlines, policy.* Point to the campus accessibility coordinator or counsel.
   You triage files.
+- *A student's name, accommodation letter, or grade appears in what you are given.* Say in one
+  sentence that you do not need it, do not repeat it in anything you produce, and carry on with
+  the file. The triage is about the document, never the student.

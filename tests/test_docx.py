@@ -19,6 +19,7 @@ def test_scan_finds_every_defect(bad_docx: Path) -> None:
         "docx.fake-heading",
         "docx.table-no-header",
         "docx.heading-skip",
+        "docx.empty-heading",
         "docx.link-text",
     }
     assert report.evaluated and report.not_evaluated
@@ -58,4 +59,4 @@ def test_fix_applies_named_route_two_fix(bad_docx: Path) -> None:
     assert "docx.table-no-header" not in after
     assert "docx.fake-heading" not in after
     fixed = Document(record["output"])
-    assert fixed.core_properties.title == "A real heading"
+    assert fixed.core_properties.title == "Grading"

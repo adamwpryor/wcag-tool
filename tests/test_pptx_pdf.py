@@ -8,11 +8,21 @@ from wcag_tool import engine
 def test_pptx_scan_and_fix(bad_pptx: Path) -> None:
     report = engine.scan(bad_pptx)
     checks = {f.check for f in report.findings}
-    assert checks == {"pptx.missing-title", "pptx.slide-no-title", "pptx.image-missing-alt"}
+    assert checks == {
+        "pptx.missing-title",
+        "pptx.slide-no-title",
+        "pptx.image-missing-alt",
+        "pptx.table-no-header",
+    }
     record = engine.fix(bad_pptx)
     assert set(record["applied"]) == {"set-title"}
     after = {f["check"] for f in record["after"]["findings"]}
-    assert after == {"pptx.slide-no-title", "pptx.image-missing-alt"}
+    assert after == {"pptx.slide-no-title", "pptx.image-missing-alt", "pptx.table-no-header"}
+    header_fix = next(f.fix_id for f in report.findings if f.check == "pptx.table-no-header")
+    record = engine.fix(bad_pptx, apply=[header_fix])
+    assert header_fix in record["applied"]
+    after = {f["check"] for f in record["after"]["findings"]}
+    assert "pptx.table-no-header" not in after
 
 
 def test_pdf_scan_and_fix(bad_pdf: Path) -> None:

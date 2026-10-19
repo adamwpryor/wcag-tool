@@ -17,9 +17,10 @@ from wcag_tool.findings import ROUTES_SUMMARY
 
 INSTRUCTIONS = (
     "Accessibility triage for course documents (DOCX, PPTX, PDF). scan_document returns "
-    "routed findings; fix_document repairs only what is deterministic unless a person "
-    "names a specific fix; describe_routes explains the five routes. Never describe a "
-    "clean report as conformance. Alt text is always a proposal for a person to confirm."
+    "routed findings for one file; scan_folder does a pile and adds Route 5 candidates and a "
+    "ready-made routed table; fix_document repairs only what is deterministic unless a person "
+    "names a specific fix; describe_routes explains the five routes. Never describe a clean "
+    "report as conformance. Alt text is always a proposal for a person to confirm."
 )
 
 mcp = MCPServer("wcag-tool", instructions=INSTRUCTIONS)
@@ -66,6 +67,23 @@ def fix_document(
         output=Path(output_path) if output_path else None,
         language=language,
     )
+
+
+@mcp.tool()
+def scan_folder(path: str, recursive: bool = True) -> dict[str, Any]:
+    """Scan every DOCX, PPTX and PDF under a folder and return the pile as one triage.
+
+    Adds what a single scan cannot see: Route 5 candidates, meaning checks that
+    recur across enough files to be fixed once at the template or the export
+    setting instead of in every copy. The result includes a `markdown` field
+    holding the routed table in the shape the triage skill asks for, with the
+    owner column left blank for a person's name.
+
+    Args:
+        path: Folder on this machine.
+        recursive: Descend into subfolders. Defaults to true.
+    """
+    return engine.scan_folder(Path(path), recursive=recursive).to_dict()
 
 
 @mcp.tool()

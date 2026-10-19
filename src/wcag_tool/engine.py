@@ -15,6 +15,7 @@ from typing import Any
 
 from wcag_tool import docx_checks, docx_fixes, pdf_checks, pptx_checks
 from wcag_tool.findings import Report, Route
+from wcag_tool.report import Batch
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,66 @@ def scan(path: Path) -> Report:
         },
     )
     return report
+
+
+def scan_many(paths: list[Path]) -> Batch:
+    """Scan several files into one batch, recording the ones that could not be scanned.
+
+    Args:
+        paths: Files to scan. Unsupported or missing paths are recorded, not raised.
+
+    Returns:
+        The batch.
+    """
+    batch = Batch()
+    for path in paths:
+        try:
+            batch.reports.append(scan(path))
+        except (FileNotFoundError, UnsupportedFormatError) as exc:
+            batch.skipped.append({"path": str(path), "reason": str(exc)})
+        except Exception as exc:  # a corrupt file must not stop the pile
+            logger.warning("skipped", extra={"data": {"path": str(path), "error": repr(exc)}})
+            batch.skipped.append({"path": str(path), "reason": f"could not open: {exc}"})
+    return batch
+
+
+def iter_supported(folder: Path, recursive: bool = True) -> list[Path]:
+    """List the supported files under a folder, skipping Office lock files and our own outputs.
+
+    Args:
+        folder: The folder to walk.
+        recursive: Whether to descend into subfolders.
+
+    Returns:
+        Sorted paths.
+    """
+    pattern = folder.rglob if recursive else folder.glob
+    out: list[Path] = []
+    for path in sorted(pattern("*")):
+        if not path.is_file() or path.suffix.lower() not in _HANDLERS:
+            continue
+        if path.name.startswith("~$") or ".remediated" in path.name:
+            continue
+        out.append(path)
+    return out
+
+
+def scan_folder(folder: Path, recursive: bool = True) -> Batch:
+    """Scan every supported file under a folder.
+
+    Args:
+        folder: The folder to walk.
+        recursive: Whether to descend into subfolders.
+
+    Returns:
+        The batch.
+
+    Raises:
+        NotADirectoryError: If ``folder`` is not a directory.
+    """
+    if not folder.is_dir():
+        raise NotADirectoryError(str(folder))
+    return scan_many(iter_supported(folder, recursive=recursive))
 
 
 def fix(

@@ -1,5 +1,10 @@
 # What is checked, what is fixed, what is not
 
+**One file or a pile.** `scan_document` reads one file. `scan_folder` reads every supported file
+under a folder and adds the thing one file cannot show: a check that recurs across three or more
+files, and at least half of them, is a **Route 5** candidate with a proposal to fix it once at the
+template or the export setting. Faculty rarely have one file. Start with the folder.
+
 Three file types. For each: what a machine can see, which of those the tool repairs on its own,
 which it drafts for a person, and what it does not evaluate at all. The `not evaluated` list is
 read out every time; it is the part people skip and the part that keeps the claim honest.
@@ -14,6 +19,7 @@ read out every time; it is the part people skip and the part that keeps the clai
 | Bold short line used as a heading | 1.3.1 | 2 | `apply-heading:<paragraph>:<level>` — only after the author says it is a heading |
 | No heading styles in a long document | 2.4.6 | 2 | Author marks the section titles |
 | Heading level skipped (1 → 3) | 1.3.1 | 2 | Author chooses: fix the level or restructure |
+| Empty heading (a Heading style with no text) | 2.4.6 | 2 | Author deletes it or gives it the section's title |
 | Table with no header row marked | 1.3.1 | 2 | `mark-header-row:<table>` — only if the first row really holds column names |
 | Link text that says nothing ("click here", a bare URL) | 2.4.4 | 2 | Author replaces it with the destination's name |
 
@@ -28,10 +34,10 @@ comment accessibility.
 | Presentation title property empty | 2.4.2 | 1 | `set-title` — uses the first slide title, else the file name |
 | Slide without a title placeholder with text | 1.3.1 | 2 | Author gives each slide a unique title; it may be visually hidden but must exist |
 | Picture with no alt text, or alt text that is a filename or an auto-generated phrase | 1.1.1 | 2 | Draft one sentence, or offer "decorative". Author confirms |
+| Table with no header row marked | 1.3.1 | 2 | `mark-header-row:<slide>:<shape>` — only if the first row really holds column names |
 
 **Not evaluated in PowerPoint:** reading order (it follows the selection pane and only a person
-can judge it) · contrast · captions on embedded audio and video · table header rows in slide
-tables · text inside images.
+can judge it) · contrast · captions on embedded audio and video · text inside images.
 
 Reading order is the defect that matters most in slides. Tell the author how to check it: open
 the selection pane, read the list from the bottom up, and ask whether that is the order a listener

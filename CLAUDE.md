@@ -10,7 +10,7 @@ published so any campus can use it:
 | :--- | :--- | :--- | :--- |
 | **Skill** (the rules) | `skill/SKILL.md` + `skill/references/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip, README |
 | **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet only) | By hand, from `dist/wcag-triage.md` | Hosted bot, no install |
-| **MCP server** | `src/wcag_tool/` | `pip install -e .` → `wcag-tool` | Local stdio server in any MCP client |
+| **MCP server + CLI** | `src/wcag_tool/` | `pip install -e .` → `wcag-tool` | Local stdio server in any MCP client (no args), or `scan` / `fix` / `demo` subcommands |
 
 **`skill/` is the source of truth for the rules.** The MCP tool descriptions, the bot
 instructions, and the reference pages must say the same thing. If a route or a closure state
@@ -53,11 +53,26 @@ sponsor material, or anything from a real course file.
 ## Commands
 
 ```bash
-pytest -q                              # tests build their own fixtures
-ruff check . && black --check .
+pytest -q                              # tests build their own fixtures; two run the real MCP wire
+ruff check . && black --check . && mypy
 python tools/build_skill.py            # regenerates dist/ (gitignored)
 wcag-tool                              # starts the stdio server; blocks waiting for a client
+wcag-tool demo ./sample                # five fictional files for the live demo
+wcag-tool scan ./sample                # routed table with Route 5 lines; --json for data
 ```
+
+## Module map
+
+| Module | Owns |
+| :--- | :--- |
+| `findings.py` | `Finding`, `Report`, the routes and closure enums, the bounded claim |
+| `report.py` | `Batch` (a pile), Route 5 aggregation, `render_markdown` |
+| `engine.py` | dispatch by extension, `scan`, `scan_many`, `scan_folder`, `fix` |
+| `docx_checks.py` / `docx_fixes.py`, `pptx_checks.py`, `pdf_checks.py` | per-format checks and fixes |
+| `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |
+| `demo.py` | fictional fixture files, shared by tests and the `demo` command |
+| `server.py` | the four MCP tools |
+| `cli.py` | the console entry point |
 
 ## Adding a check
 
@@ -65,7 +80,8 @@ wcag-tool                              # starts the stdio server; blocks waiting
    WCAG criterion, a route, a closure state, a confidence, and a `proposal` if Route 2.
 2. Add the criterion to that module's `EVALUATED` list, or the gap to `NOT_EVALUATED`.
 3. Add the row to `skill/references/checks.md` in the same commit.
-4. Add a fixture defect in `tests/conftest.py` and an assertion.
+4. Add the defect to the fixture builders in `src/wcag_tool/demo.py` (they also feed the live
+   demo), update the expected values in ace-1's `October_Build/20_Test_Kit.md`, and assert it.
 5. If it carries a `fix_id`, add the fix to the format's `apply()` and decide its route honestly.
 
 ## Where things were left

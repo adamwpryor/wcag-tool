@@ -25,7 +25,7 @@ EVALUATED = [
     "1.3.1 Info and Relationships (heading styles, table header rows)",
     "2.4.2 Page Titled (document title)",
     "2.4.4 Link Purpose (link text)",
-    "2.4.6 Headings and Labels (heading level sequence)",
+    "2.4.6 Headings and Labels (heading level sequence, empty headings)",
     "3.1.1 Language of Page (default document language)",
 ]
 
@@ -159,6 +159,24 @@ def scan(path: Path) -> Report:
         level = _heading_level(style_name(paragraph))
         if level is not None and paragraph.text.strip():
             levels.append((index, level))
+            continue
+        if level is not None:
+            f.append(
+                Finding(
+                    check="docx.empty-heading",
+                    criterion="2.4.6 Headings and Labels",
+                    asset=asset,
+                    locator=f"paragraph {index}",
+                    evidence=(
+                        f"A Heading {level} paragraph with no text; it is announced as an "
+                        "empty heading."
+                    ),
+                    route=Route.CONTENT_OWNER,
+                    closure_required=Closure.CONTENT_OWNER_VERIFIED,
+                    confidence=Confidence.HIGH,
+                    proposal="Delete the empty heading, or give it the section's title.",
+                )
+            )
             continue
         next_text = paragraphs[index + 1].text if index + 1 < len(paragraphs) else ""
         if _is_fake_heading(paragraph, next_text):

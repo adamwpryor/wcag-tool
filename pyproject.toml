@@ -29,7 +29,7 @@ dependencies = [
 dev = ["pytest>=8", "ruff", "black", "mypy"]
 
 [project.scripts]
-wcag-tool = "wcag_tool.server:main"
+wcag-tool = "wcag_tool.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/adamwpryor/wcag-tool"
