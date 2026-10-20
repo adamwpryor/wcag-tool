@@ -1,4 +1,4 @@
-# Document accessibility triage — the rules, as files you can take anywhere
+# Document accessibility triage: the rules, as files you can take anywhere
 
 These files are the rules behind the document accessibility triage, written so that you can run
 the same triage in whichever AI assistant your campus already uses. Nothing here certifies
@@ -9,25 +9,32 @@ problem has an owner and the evidence it needs before it can be called done.
 
 | File | What it is |
 | :--- | :--- |
-| `wcag-triage.md` | **Everything in one file.** The instructions and all four reference pages, joined. Paste it into a chat, or attach it, and say *"triage these files."* |
-| `wcag-triage-skill.zip` | The same material as a skill folder: `SKILL.md` plus a `references/` folder with the four pages. For assistants and platforms that take a skill or project folder rather than a pasted file. |
+| `wcag-triage.md` | **Everything in one file.** The instructions and all five reference pages, joined. Paste it into a chat, or attach it, and say *"triage these files."* |
+| `wcag-triage-skill.zip` | The skill folder, and the most capable way to run it without installing anything else: `SKILL.md`, the reference pages, the rules as JSON, a read-only scanner the assistant can run where it can run code, and a test kit (`TESTING.md`) to check it works before you share it. |
+| `wcag-triage-bot/` | The BoodleBox bot: `instructions.md` for the instruction field, and `knowledge/` to attach. |
 | `README.md` | This page. |
 
 ## How to use it
 
-**In a chat assistant** — Claude, ChatGPT, Gemini, or whichever you have. Start a new conversation,
+**In a chat assistant.** Claude, ChatGPT, Gemini, or whichever you have. Start a new conversation,
 attach `wcag-triage.md` or paste its contents, and type: *"Triage these files."* It will ask you
-three questions, one at a time, then route what it can see and end with a report.
+three questions, one at a time, then route what it can see and end with a report. Read as text, a
+file hides some of what matters (alt text, header rows, the language setting); the assistant will
+tell you which checks it could not do.
+
+**As a skill, where the assistant can run code** (claude.ai with code execution, Claude Code).
+Upload `wcag-triage-skill.zip` as a skill. The assistant then runs `scripts/scan.py` on your files
+and sees what a text paste cannot. It still changes nothing; it finds and routes.
 
 **With the wcag-tool connected.** If your assistant takes MCP servers, install `wcag-tool` and
-the same instructions will run the scans and the deterministic repairs for you, on your own
-machine. Your files never leave it. See the repository README for the three-line setup.
+the same instructions also apply the safe repairs (title and language) to a copy of each file, on
+your own machine. Your files never leave it. See the repository README.
 
-**In a platform that takes a skill or project folder.** Unzip `wcag-triage-skill.zip`. Use
-`SKILL.md` as the instructions and add the four files in `references/` as the knowledge the
-assistant can read.
+**In BoodleBox.** See `bot/BOODLEBOX_BOT.md` in the repository: paste `instructions.md`, attach
+the files in `knowledge/`.
 
-**With colleagues.** Send them the one file. Nothing in it is specific to you or your campus.
+**With colleagues.** Send them the zip and tell them to run `TESTING.md` first. Nothing in it is
+specific to you or your campus.
 
 ## Two rules while you use it
 
@@ -40,10 +47,14 @@ assistant can read.
 ## What you get at the end
 
 A routed table: every finding with its criterion, its route, a named owner, and the closure state
-it needs. The deterministic fixes applied to a copy of each file, with a record. Drafts of alt
-text for you to keep, edit, or mark decorative. And the one sentence your campus can honestly say
-about the files afterwards, which is narrower than "compliant" and stays true.
+it needs. Where the tool is connected, the deterministic fixes applied to a copy of each file,
+with a record. Drafts of alt text for you to keep, edit, or mark decorative. The list of every
+WCAG criterion the triage did not settle, so nothing reads as passed. And the one sentence your
+campus can honestly say about the files afterwards, which is narrower than "compliant" and stays
+true.
 
 ---
 
-*Developed for the CIC AI Ready network. Adapt freely for your own campus.*
+*Developed for the CIC AI Ready network. Adapt freely for your own campus. Criterion text in
+`criteria.md` and `rules/wcag21.json` is quoted from WCAG 2.1, Copyright © W3C, under the W3C
+Document License.*

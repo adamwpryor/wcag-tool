@@ -1,0 +1,115 @@
+{
+  "asset": "week_1_slides.pptx",
+  "format": "pptx",
+  "counts_by_route": {
+    "1": 1,
+    "2": 3,
+    "3": 0,
+    "4": 0,
+    "5": 0
+  },
+  "findings": [
+    {
+      "check": "pptx.missing-title",
+      "criterion": "2.4.2 Page Titled",
+      "locator": "core properties",
+      "evidence": "The presentation title property is empty.",
+      "route": 1,
+      "closure_required": "automatically_verified",
+      "confidence": "high",
+      "fix_id": "set-title",
+      "proposal": null
+    },
+    {
+      "check": "pptx.table-no-header",
+      "criterion": "1.3.1 Info and Relationships",
+      "locator": "slide 1, Table 2",
+      "evidence": "The table has no header row marked.",
+      "route": 2,
+      "closure_required": "content_owner_verified",
+      "confidence": "high",
+      "fix_id": "mark-header-row:1:1",
+      "proposal": "If the first row holds column names, mark it as the header row. If the table is used for layout, replace it with text boxes."
+    },
+    {
+      "check": "pptx.slide-no-title",
+      "criterion": "1.3.1 Info and Relationships",
+      "locator": "slide 2",
+      "evidence": "No title placeholder with text; screen readers announce the slide by number only.",
+      "route": 2,
+      "closure_required": "content_owner_verified",
+      "confidence": "high",
+      "fix_id": null,
+      "proposal": "Give the slide a unique title in the title placeholder. It may be visually hidden, but it must exist."
+    },
+    {
+      "check": "pptx.image-missing-alt",
+      "criterion": "1.1.1 Non-text Content",
+      "locator": "slide 2, Picture 1",
+      "evidence": "The alt text is a filename or an auto-generated phrase: 'image.png'.",
+      "route": 2,
+      "closure_required": "content_owner_verified",
+      "confidence": "high",
+      "fix_id": null,
+      "proposal": "Write one sentence saying what this picture conveys on this slide, or mark it decorative."
+    }
+  ],
+  "coverage": {
+    "checked_in_part": [
+      "1.1.1",
+      "1.3.1",
+      "2.4.2"
+    ],
+    "not_checked": [
+      "1.3.2",
+      "1.3.3",
+      "1.4.1",
+      "1.4.3",
+      "1.4.4",
+      "1.4.5",
+      "1.4.10",
+      "1.4.11",
+      "1.4.12",
+      "2.4.4",
+      "2.4.6",
+      "3.1.1",
+      "3.1.2",
+      "4.1.1"
+    ],
+    "if_present": [
+      "1.2.1",
+      "1.2.2",
+      "1.2.3",
+      "1.2.4",
+      "1.2.5",
+      "1.3.4",
+      "1.3.5",
+      "1.4.2",
+      "1.4.13",
+      "2.1.1",
+      "2.1.2",
+      "2.1.4",
+      "2.2.1",
+      "2.2.2",
+      "2.3.1",
+      "2.4.1",
+      "2.4.3",
+      "2.4.5",
+      "2.4.7",
+      "2.5.1",
+      "2.5.2",
+      "2.5.3",
+      "2.5.4",
+      "3.2.1",
+      "3.2.2",
+      "3.2.3",
+      "3.2.4",
+      "3.3.1",
+      "3.3.2",
+      "3.3.3",
+      "3.3.4",
+      "4.1.2",
+      "4.1.3"
+    ]
+  }
+}

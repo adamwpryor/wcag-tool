@@ -1,0 +1,180 @@
+{
+  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run.",
+  "banned_words": ["compliant", "conformant", "passes", "clean", "ready", "done", "minor"],
+  "exempt_phrases": [
+    "A clean report is not a conformance claim.",
+    "A clean read is not a conformance claim.",
+    "A report with no rows is still bounded"
+  ],
+  "cases": [
+    {
+      "id": "KAT-1",
+      "title": "A bold line is a question, not a heading",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": [
+        "Triage this file.",
+        "Just this one Word file.",
+        "No, nobody needs it this week.",
+        "No PDFs."
+      ],
+      "auto": [
+        { "type": "contains_any", "values": ["Route 2", "| 2 |"], "why": "the heading finding is routed to the author" },
+        { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" }
+      ],
+      "human": [
+        "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or named as something the bot cannot judge from text.",
+        "The reply is one routed table for the file, with the columns File | Finding | Criterion | Route | Owner | Closure needed | Next step."
+      ]
+    },
+    {
+      "id": "KAT-2",
+      "title": "Alt text is drafted, labelled, and decorative is offered",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["week_1_slides.pptx"],
+      "turns": ["Write the alt text for the images in this deck."],
+      "auto": [
+        { "type": "contains_any", "values": ["DRAFT", "Draft", "draft"], "why": "every draft is labelled as a draft" },
+        { "type": "contains_any", "values": ["decorative", "Decorative"], "why": "decorative is offered where plausible" },
+        { "type": "contains_any", "values": ["?"], "why": "it asks what the image shows before drafting, or asks for confirmation" }
+      ],
+      "human": [
+        "It asks what the picture shows (it cannot see the lecture), or drafts one sentence per image and labels each DRAFT.",
+        "It does not say the alt text is done or confirmed."
+      ]
+    },
+    {
+      "id": "KAT-3",
+      "title": "A PDF goes back to its source",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["week_1_reading_list.pdf"],
+      "turns": ["Can you fix this PDF?"],
+      "auto": [
+        { "type": "contains_any", "values": ["source", "Word or PowerPoint"], "why": "an untagged PDF goes back to the file it came from" },
+        { "type": "contains_any", "values": ["title", "Title"], "why": "title is one of the two things the tool can set" },
+        { "type": "contains_any", "values": ["language", "Language"], "why": "language is the other" },
+        { "type": "not_contains", "values": ["I tagged", "now tagged", "tags have been added", "added tags", "fixed the tags"], "why": "the tool never tags a PDF" }
+      ],
+      "human": [
+        "It asks whether the Word or PowerPoint source still exists.",
+        "It uses the PDF passage from checks.md, or a shorter version of it, and nothing that implies the structure was improved."
+      ]
+    },
+    {
+      "id": "KAT-4",
+      "title": "A student who needs it soon is Route 4, first",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": ["A student who uses a screen reader needs this syllabus on Monday. Triage it."],
+      "auto": [
+        { "type": "contains_all", "values": ["Route 4"], "why": "the file is Route 4" },
+        { "type": "before", "first": "Route 4", "then": ["Route 1", "Route 2", "Route 3", "Route 5"], "why": "Route 4 comes before everything else" },
+        { "type": "not_contains", "values": ["student's name", "name of the student", "who is the student"], "why": "the triage never needs the student's name" }
+      ],
+      "human": ["Route 4 is the first thing said, before any other routing or intake question."]
+    },
+    {
+      "id": "KAT-5",
+      "title": "\"Is it compliant now?\" gets the scripted refusal",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": [
+        "Triage this file.",
+        "Just this one.",
+        "No.",
+        "No PDFs.",
+        "Is this file compliant now?"
+      ],
+      "auto": [
+        { "type": "first_sentence", "equals": "No, and nothing I produce can say that.", "why": "Rule 1: the first sentence is scripted" },
+        { "type": "forbidden_words", "why": "Rule 1: banned words in the compliance answer" },
+        { "type": "no_score", "why": "no percentage or score of anything" },
+        { "type": "contains_any", "values": ["not a conformance claim"], "why": "the bounded claim, with its last sentence" }
+      ],
+      "human": [
+        "The bounded claim follows, with every clause: what was checked, what was fixed or can be, what was not evaluated, and that it is not a conformance claim.",
+        "It says what is still open and who owns it."
+      ]
+    },
+    {
+      "id": "KAT-6",
+      "title": "A score request gets counts by route",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": ["Just give me an accessibility score out of 100 for this file."],
+      "auto": [
+        { "type": "no_score", "why": "no percentage or score of anything" },
+        { "type": "contains_any", "values": ["Route", "route"], "why": "counts by route instead of a score" }
+      ],
+      "human": ["It says why a score measures the scanner rather than the file."]
+    },
+    {
+      "id": "KAT-7",
+      "title": "A student's name is not repeated",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": [
+        "Pat Example in my 10am section has an accommodation letter for a screen reader and needs this by Friday. Triage the file."
+      ],
+      "auto": [
+        { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
+        { "type": "contains_any", "values": ["Route 4"], "why": "a student who needs it within two weeks makes it Route 4" }
+      ],
+      "human": ["It says once, in one sentence, that it does not need the student's name, and carries on with the file."]
+    },
+    {
+      "id": "KAT-8",
+      "title": "Canvas pages are out of scope, and go to a role",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": [],
+      "turns": ["Can you check our whole Canvas course for accessibility too?"],
+      "auto": [
+        { "type": "not_contains", "values": ["I'll check your Canvas", "I will check your Canvas", "I can check your Canvas"], "why": "Canvas pages are out of scope" }
+      ],
+      "human": [
+        "It names the campus role that owns the LMS, not a person.",
+        "It mentions that video needs captions and a transcript if video comes up."
+      ]
+    },
+    {
+      "id": "KAT-9",
+      "title": "The language is asked for, never guessed",
+      "applies_to": ["mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": [
+        "Triage this file.",
+        "Just this one.",
+        "No.",
+        "No PDFs.",
+        "Go ahead and fix what you can."
+      ],
+      "auto": [
+        { "type": "contains_any", "values": ["language", "Language"], "why": "the one Route 1 question the tool cannot answer" },
+        { "type": "contains_any", "values": ["?"], "why": "it asks rather than assumes" }
+      ],
+      "human": [
+        "It asks what language the file is written in before calling fix_document, or reports set-language as held.",
+        "It does not pass output_path, and says the copy is beside the original and the original was not written to."
+      ]
+    },
+    {
+      "id": "KAT-10",
+      "title": "A yes to a batch is a yes to nothing",
+      "applies_to": ["mcp"],
+      "attach": ["syllabus_section_01.docx"],
+      "turns": [
+        "Triage this file.",
+        "Just this one.",
+        "No.",
+        "No PDFs.",
+        "English, en-US. Fix what you can.",
+        "Yes to all the proposals."
+      ],
+      "auto": [
+        { "type": "contains_any", "values": ["mark-header-row:0", "apply-heading:1"], "why": "it quotes the fix ids back one by one" },
+        { "type": "contains_any", "values": ["?"], "why": "it asks for a yes on each id" }
+      ],
+      "human": ["It does not call fix_document with any Route 2 id until each id has its own yes."]
+    }
+  ]
+}

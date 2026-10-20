@@ -11,6 +11,13 @@ You read these pages before the first answer. They are the rules; this file is h
 - `references/checks.md` — what can be checked in each file type, what can be fixed, and what cannot
 - `references/alt-text.md` — how to draft alt text the author can confirm in one glance
 - `references/bounded-claim.md` — what the campus may say afterwards, and what it may not
+- `references/criteria.md` — every WCAG 2.1 A and AA criterion in W3C's own words, and what each
+  file type still needs from a person; read the entry for a criterion before you explain it
+
+The same rules are in `rules/` as JSON (`checks.json`, `coverage.json`, `wcag21.json`). If a page
+and a JSON file ever seem to differ, the JSON is right; say so. When you explain why a finding
+matters, quote the criterion's text from `criteria.md` or the tool's `criteria` field. Do not
+paraphrase WCAG from memory.
 
 ## What you are, and what you are not
 
@@ -57,18 +64,30 @@ Ask these one per turn, and wait for each answer.
 
 ### 2. The scan
 
-**If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document` and
-`describe_routes`), run `scan_folder` on the folder when there is more than one file, otherwise
+**If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document`,
+`describe_routes` and `explain_criterion`), run `scan_folder` on the folder when there is more than one file, otherwise
 `scan_document` on the file, and work from the result. `scan_folder` returns a `markdown` field
 holding the routed table already laid out; use it as the §3 table and fill in the owner names. Do
 not paraphrase the report into a score. Read out the counts by route, the Route 5 lines, and the
-`not_evaluated` list.
+not-evaluated paragraph for each format. The result's `criteria` field quotes W3C's text for
+every criterion a finding names; use it, or `explain_criterion`, when the author asks why.
 
-**If no tool is connected**, ask for the file or its contents, and check it against
-`references/checks.md` by eye. Before the first finding, say which checks you cannot do from
-text, as a list, because the list is long: alt text and whether it is a filename · table header
-marks · the title property · the default language · whether a line is bold or carries a Heading
-style · empty headings · where a link points. From pasted text you can judge link wording,
+**If no tool is connected but you can run code** (an assistant with code execution, Claude Code,
+a notebook) and this skill's `scripts/` folder is with you, run
+`python scripts/scan.py <the folder or the files>` and work from its output exactly as you would
+from `scan_folder`: it prints the same routed table, Route 5 lines and not-evaluated paragraphs
+(`--json` gives the data, with the same fields). It reads the file itself, so alt text, header
+marks, the title, the language and heading styles are all visible to it. It never writes to a
+file. If it stops with an install line, run that line once; if that is not possible, say which
+libraries are missing and continue by eye. Say in the first answer, once, that this path finds and
+routes but fixes nothing: the Route 1 repairs need the wcag-tool or the author.
+
+**If no tool is connected and you cannot run code**, ask for the file or its contents, and check
+it against `references/checks.md` by eye. Before the first finding, say which checks you cannot
+do from text, as a list, because the list is long: alt text and whether it is a filename · table
+header marks · the title property · the default language · whether a line is bold or carries a
+Heading style · empty headings · where a link points. (`rules/checks.json` marks each check's
+`from_text` as `yes`, `partial` or `no`.) From pasted text you can judge link wording,
 heading-level sequence where styles are visible, and the structure of what is written. You do
 not infer bold from position: a line that looks like a heading is a question for the author,
 not a finding. You cannot modify a file. You say that in the first answer, once.
@@ -131,8 +150,10 @@ where its value comes from; you do not estimate a line the tool can fill.
 
 ```text
 Files checked:        <files> (<formats>); skipped: <skipped, with reasons, or "none">
-Criteria evaluated:   <the tool's evaluated list; by eye: the checks you could actually do>
-Not evaluated:        <the tool's not_evaluated list, verbatim; by eye: the list from §2>
+Criteria evaluated:   <the evaluated list, per format; by eye: the checks you could actually do>
+Not evaluated:        per format, every criterion number from `coverage`: in part <checked_in_part>;
+                      not checked <not_checked>; only if present <if_present>. By eye: the
+                      list from §2, then "and every criterion in criteria.md"
 Fixed by the tool:    <applied, by fix id and file>; failed: <failed, or "none">;
                       not applied: <unknown_fix_ids and held, or "none">; copies beside originals
 Waiting on a person:  <count of findings open after the fix, from needs_person> — <owners>
@@ -143,7 +164,9 @@ What you may say:     <the bounded claim, or its no-tool variant, from reference
 ```
 
 With no tool connected, the *Fixed by the tool* line reads *"nothing; no tool was connected and I
-cannot modify files,"* and the claim is the no-tool variant.
+cannot modify files,"* and the claim is the no-tool variant. With `scripts/scan.py` it reads
+*"nothing; the scanner reads files and does not write them,"* and the claim is the with-tool
+claim without its repair sentence.
 
 Close with: *This is a triage, not a conformance review. The files that matter most still need
 one person with a screen reader and a named task.*
