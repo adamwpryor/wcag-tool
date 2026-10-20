@@ -11,13 +11,14 @@ import base64
 from io import BytesIO
 from pathlib import Path
 
-import pymupdf
 from docx import Document
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from pptx import Presentation
 from pptx.util import Inches
+from pypdf import PdfWriter
+from pypdf.generic import ContentStream, DictionaryObject, NameObject
 
 # A 1x1 transparent PNG, so no image file has to ship with the package.
 PNG_1X1 = base64.b64decode(
@@ -123,14 +124,87 @@ def make_bad_pdf(path: Path) -> Path:
     Returns:
         The path written.
     """
-    doc = pymupdf.open()
-    page = doc.new_page()
-    page.insert_text((72, 72), "Week 1 reading list", fontsize=16)
-    page.insert_text((72, 110), "Chapter 1, pages 1 to 24.")
-    page.insert_text((72, 130), "Chapter 2, pages 25 to 51.")
-    doc.save(str(path))
-    doc.close()
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    page[NameObject("/Resources")] = DictionaryObject(
+        {NameObject("/Font"): DictionaryObject({NameObject("/F1"): font})}
+    )
+    content = ContentStream(None, writer)
+    content.set_data(
+        b"BT /F1 16 Tf 72 720 Td (Week 1 reading list) Tj ET\n"
+        b"BT /F1 12 Tf 72 682 Td (Chapter 1, pages 1 to 24.) Tj ET\n"
+        b"BT /F1 12 Tf 72 662 Td (Chapter 2, pages 25 to 51.) Tj ET\n"
+    )
+    page.replace_contents(content)
+    with path.open("wb") as handle:
+        writer.write(handle)
     return path
+
+
+def make_unstructured_docx(path: Path) -> Path:
+    """Write a long handout with a title and a language but no headings at all.
+
+    Args:
+        path: Where to write the file.
+
+    Returns:
+        The path written.
+    """
+    doc = Document()
+    doc.core_properties.title = "Field exercise handout"
+    for lang in doc.styles.element.xpath("./w:docDefaults/w:rPrDefault/w:rPr/w:lang"):
+        lang.set(qn("w:val"), "en-US")
+    for week in range(1, 17):
+        doc.add_paragraph(
+            f"Week {week}. Walk the assigned route, note three features of the built "
+            "environment, and bring the notes to the next session."
+        )
+    doc.save(str(path))
+    return path
+
+
+def make_scanned_pdf(path: Path) -> Path:
+    """Write a PDF whose only page is a picture: no text a screen reader could read.
+
+    Args:
+        path: Where to write the file.
+
+    Returns:
+        The path written.
+    """
+    from PIL import Image  # Pillow arrives with python-pptx
+
+    fixed = "D:20261019000000Z"
+    Image.new("RGB", (200, 260), "white").save(
+        path, "PDF", resolution=72.0, creationDate=fixed, modDate=fixed
+    )
+    return path
+
+
+def make_test_set(directory: Path) -> list[Path]:
+    """The demo pile plus one file for each check the demo does not trigger.
+
+    Every check in ``rules/checks.json`` fires on at least one of these files; the
+    skill's self-test and its expected results are built from them.
+
+    Args:
+        directory: Created if needed.
+
+    Returns:
+        The paths written, in a stable order.
+    """
+    return [
+        *make_demo_set(directory),
+        make_unstructured_docx(directory / "field_exercise_handout.docx"),
+        make_scanned_pdf(directory / "scanned_article.pdf"),
+    ]
 
 
 def make_demo_set(directory: Path) -> list[Path]:

@@ -29,6 +29,19 @@ def test_fix_writes_record(bad_docx: Path, capsys: pytest.CaptureFixture[str]) -
     assert Path(record["output"]).exists()
 
 
+def test_tilde_means_home_in_the_cli_and_the_server(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from wcag_tool import server
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    assert cli.main(["demo", "~/pile"]) == 0
+    assert (tmp_path / "pile" / "week_1_slides.pptx").exists()
+    assert server.scan_folder("~/pile")["files"] == 5
+    capsys.readouterr()
+
+
 def test_unsupported_file_exits_two(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     path = tmp_path / "x.txt"
     path.write_text("x", encoding="utf-8")

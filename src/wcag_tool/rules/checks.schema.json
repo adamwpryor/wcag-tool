@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/adamwpryor/wcag-tool/rules/checks.schema.json",
+  "title": "wcag-tool checks",
+  "type": "object",
+  "required": ["checks"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "about": { "type": "string" },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "format",
+          "criterion",
+          "finding",
+          "looks_at",
+          "route",
+          "closure",
+          "confidence",
+          "fix_id",
+          "remedy",
+          "proposal",
+          "template_fix",
+          "from_text"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^(docx|pptx|pdf)\\.[a-z0-9]+(-[a-z0-9]+)*$" },
+          "format": { "enum": ["docx", "pptx", "pdf"] },
+          "criterion": { "type": "string", "pattern": "^[1-4]\\.[0-9]+\\.[0-9]+$" },
+          "finding": { "type": "string", "minLength": 1 },
+          "looks_at": { "type": "string", "minLength": 1 },
+          "route": {
+            "description": "The scanner emits only Route 1 or 2. Route 5 comes from aggregation; Routes 3 and 4 are added by a person.",
+            "enum": [1, 2]
+          },
+          "closure": {
+            "enum": [
+              "automatically_verified",
+              "content_owner_verified",
+              "expert_verified",
+              "user_task_verified"
+            ]
+          },
+          "confidence": { "enum": ["high", "medium", "low"] },
+          "fix_id": {
+            "description": "The fix the tool can apply, with <placeholders> for the parts the scan fills in. Null when no tool fix exists.",
+            "type": ["string", "null"],
+            "pattern": "^[a-z]+(-[a-z]+)*(:<[a-z]+>)*$"
+          },
+          "remedy": { "type": "string", "minLength": 1 },
+          "proposal": { "type": ["string", "null"] },
+          "template_fix": { "type": "string", "minLength": 1 },
+          "from_text": {
+            "description": "Whether the defect can be judged from the file read as plain text, with no tool.",
+            "enum": ["yes", "partial", "no"]
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "route": { "const": 1 } } },
+            "then": {
+              "properties": {
+                "closure": { "const": "automatically_verified" },
+                "fix_id": { "type": "string" }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "route": { "const": 2 } } },
+            "then": {
+              "properties": {
+                "closure": { "not": { "const": "automatically_verified" } },
+                "proposal": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,1005 @@
+{
+  "$schema": "./coverage.schema.json",
+  "about": "What the scanner can and cannot judge, for every WCAG 2.1 A and AA criterion in each format. checked_in_part: a check exists and the note says what a person still judges. not_checked: applies to every file; the tool does not look. if_present: applies only when the file has the content named in 'when'. 'who' names who can close the gap: author, expert, or user_test (a person with assistive technology and a named task). Nothing here is ever reported as passed.",
+  "criteria": [
+    {
+      "id": "1.1.1",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether alt text that exists says what the image conveys in this course"
+      },
+      "pptx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether alt text that exists says what the picture conveys; charts, SmartArt and grouped shapes are not checked"
+      },
+      "pdf": {
+        "status": "checked_in_part",
+        "who": "expert",
+        "note": "alt text on figures inside the tag tree is not read; only pages with no text at all are found"
+      }
+    },
+    {
+      "id": "1.2.1",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a transcript for audio-only, or a transcript or audio track for video-only",
+        "when": "embedded or linked audio or video"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a transcript for audio-only, or a transcript or audio track for video-only",
+        "when": "embedded or linked audio or video"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a transcript for audio-only, or a transcript or audio track for video-only",
+        "when": "embedded or linked audio or video"
+      }
+    },
+    {
+      "id": "1.2.2",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on prerecorded video",
+        "when": "embedded or linked audio or video"
+      }
+    },
+    {
+      "id": "1.2.3",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description or a full text alternative for prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description or a full text alternative for prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description or a full text alternative for prerecorded video",
+        "when": "embedded or linked audio or video"
+      }
+    },
+    {
+      "id": "1.2.4",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on live audio; rare in a course file",
+        "when": "live audio"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on live audio; rare in a course file",
+        "when": "live audio"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "captions on live audio; rare in a course file",
+        "when": "live audio"
+      }
+    },
+    {
+      "id": "1.2.5",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description for prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description for prerecorded video",
+        "when": "embedded or linked audio or video"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio description for prerecorded video",
+        "when": "embedded or linked audio or video"
+      }
+    },
+    {
+      "id": "1.3.1",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "lists typed by hand instead of list styles, merged table cells, text boxes, and whether the headings mark the real sections"
+      },
+      "pptx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "lists, table structure beyond the header row, and grouped content"
+      },
+      "pdf": {
+        "status": "checked_in_part",
+        "who": "expert",
+        "note": "whether the tags that exist match the headings, lists and tables on the page"
+      }
+    },
+    {
+      "id": "1.3.2",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "reading order of text boxes and floating objects"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "reading order: open the selection pane and read it from the bottom up"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "tag order against visual order; needs a screen reader"
+      }
+    },
+    {
+      "id": "1.3.3",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "instructions that rely on shape, colour, size or position, such as 'the box on the right'"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "instructions that rely on shape, colour, size or position, such as 'the box on the right'"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "instructions that rely on shape, colour, size or position, such as 'the box on the right'"
+      }
+    },
+    {
+      "id": "1.3.4",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "content that locks the display to portrait or landscape; the files themselves rarely do",
+        "when": "content locked to one orientation"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "content that locks the display to portrait or landscape; the files themselves rarely do",
+        "when": "content locked to one orientation"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "content that locks the display to portrait or landscape; the files themselves rarely do",
+        "when": "content locked to one orientation"
+      }
+    },
+    {
+      "id": "1.3.5",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "form fields that collect information about the user identify their purpose",
+        "when": "form fields that ask about the user"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "form fields that collect information about the user identify their purpose",
+        "when": "form fields that ask about the user"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "form fields that collect information about the user identify their purpose",
+        "when": "form fields that ask about the user"
+      }
+    },
+    {
+      "id": "1.4.1",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "information carried by colour alone, such as red for due dates or colour-only chart series"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "information carried by colour alone, such as red for due dates or colour-only chart series"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "information carried by colour alone, such as red for due dates or colour-only chart series"
+      }
+    },
+    {
+      "id": "1.4.2",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio that plays on its own for more than three seconds can be paused or turned down",
+        "when": "audio that plays automatically"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio that plays on its own for more than three seconds can be paused or turned down",
+        "when": "audio that plays automatically"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "audio that plays on its own for more than three seconds can be paused or turned down",
+        "when": "audio that plays automatically"
+      }
+    },
+    {
+      "id": "1.4.3",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text colour against its background; a contrast checker settles it"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text colour against its background; a contrast checker settles it"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text colour against its background; a contrast checker settles it"
+      }
+    },
+    {
+      "id": "1.4.4",
+      "docx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "usually met by the reader's zoom; text inside images does not scale"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "usually met by the reader's zoom; text in fixed boxes can clip and text inside images does not scale"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "usually met by the reader's zoom; text inside images does not scale"
+      }
+    },
+    {
+      "id": "1.4.5",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text shown as a picture, such as a screenshot of a table or a pasted slide"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text shown as a picture, such as a screenshot of a table or a pasted slide"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "text shown as a picture, such as a screenshot of a table or a pasted slide"
+      }
+    },
+    {
+      "id": "1.4.10",
+      "docx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "depends on the reader's app; text boxes and wide tables resist reflow"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "slides are a fixed layout and do not reflow; the notes and outline view do"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "reflow needs a tagged PDF; untagged files cannot reflow"
+      }
+    },
+    {
+      "id": "1.4.11",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "chart lines, icons and form-field borders against their background"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "chart lines, icons and form-field borders against their background"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "chart lines, icons and form-field borders against their background"
+      }
+    },
+    {
+      "id": "1.4.12",
+      "docx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "depends on the reader's app; rarely something the file controls"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "depends on the reader's app; rarely something the file controls"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "depends on the reader's app; rarely something the file controls"
+      }
+    },
+    {
+      "id": "1.4.13",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "tooltips or pop-ups that appear on hover or focus can be dismissed and stay put",
+        "when": "tooltips or pop-ups"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "tooltips or pop-ups that appear on hover or focus can be dismissed and stay put",
+        "when": "tooltips or pop-ups"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "tooltips or pop-ups that appear on hover or focus can be dismissed and stay put",
+        "when": "tooltips or pop-ups"
+      }
+    },
+    {
+      "id": "2.1.1",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "everything interactive works from the keyboard",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "everything interactive works from the keyboard",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "everything interactive works from the keyboard",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      }
+    },
+    {
+      "id": "2.1.2",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus never gets stuck",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus never gets stuck",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus never gets stuck",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      }
+    },
+    {
+      "id": "2.1.4",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "single-key shortcuts added by macros or scripts can be turned off or remapped",
+        "when": "macros or scripts"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "single-key shortcuts added by macros or scripts can be turned off or remapped",
+        "when": "macros or scripts"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "single-key shortcuts added by macros or scripts can be turned off or remapped",
+        "when": "macros or scripts"
+      }
+    },
+    {
+      "id": "2.2.1",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "time limits can be turned off, adjusted or extended",
+        "when": "a time limit"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "slides that advance on a timer can be slowed or stopped",
+        "when": "slide timings or a time limit"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "time limits can be turned off, adjusted or extended",
+        "when": "a time limit"
+      }
+    },
+    {
+      "id": "2.2.2",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "moving, blinking or auto-updating content can be paused, stopped or hidden",
+        "when": "animation, animated images or auto-advancing content"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "moving, blinking or auto-updating content can be paused, stopped or hidden",
+        "when": "animation, animated images or auto-advancing content"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "moving, blinking or auto-updating content can be paused, stopped or hidden",
+        "when": "animation, animated images or auto-advancing content"
+      }
+    },
+    {
+      "id": "2.3.1",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "nothing flashes more than three times a second",
+        "when": "flashing animation or video"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "nothing flashes more than three times a second",
+        "when": "flashing animation or video"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "nothing flashes more than three times a second",
+        "when": "flashing animation or video"
+      }
+    },
+    {
+      "id": "2.4.1",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a way to skip blocks of content that repeat across files",
+        "when": "a set of related files rather than one file"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a way to skip blocks of content that repeat across files",
+        "when": "a set of related files rather than one file"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "a way to skip blocks of content that repeat across files",
+        "when": "a set of related files rather than one file"
+      }
+    },
+    {
+      "id": "2.4.2",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether the title describes the file"
+      },
+      "pptx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether the title describes the deck"
+      },
+      "pdf": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether the title describes the file; a title set from the file name needs a glance"
+      }
+    },
+    {
+      "id": "2.4.3",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "focus moves in an order that keeps the meaning",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "focus moves in an order that keeps the meaning",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "focus moves in an order that keeps the meaning",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      }
+    },
+    {
+      "id": "2.4.4",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether link text that is not generic still names its destination; links in headers and footers are not read"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "link text on slides"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "link text; fix it in the source and re-export"
+      }
+    },
+    {
+      "id": "2.4.5",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "more than one way to find a file within the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "more than one way to find a file within the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "more than one way to find a file within the set",
+        "when": "a set of related files rather than one file"
+      }
+    },
+    {
+      "id": "2.4.6",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether heading text describes its section"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "whether slide titles and labels describe their content"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "whether headings and labels describe their content; fix them in the source"
+      }
+    },
+    {
+      "id": "2.4.7",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus is visible; mostly the reader's app",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus is visible; mostly the reader's app",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "keyboard focus is visible; mostly the reader's app",
+        "when": "links, form fields, buttons or other things a keyboard moves to"
+      }
+    },
+    {
+      "id": "2.5.1",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by a path or multi-point gesture also works with a single pointer",
+        "when": "content operated by gestures"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by a path or multi-point gesture also works with a single pointer",
+        "when": "content operated by gestures"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by a path or multi-point gesture also works with a single pointer",
+        "when": "content operated by gestures"
+      }
+    },
+    {
+      "id": "2.5.2",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "actions fire on release and can be cancelled",
+        "when": "form fields or other controls"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "actions fire on release and can be cancelled",
+        "when": "form fields or other controls"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "actions fire on release and can be cancelled",
+        "when": "form fields or other controls"
+      }
+    },
+    {
+      "id": "2.5.3",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "a control's accessible name contains its visible label",
+        "when": "form fields or other controls"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "a control's accessible name contains its visible label",
+        "when": "form fields or other controls"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "a control's accessible name contains its visible label",
+        "when": "form fields or other controls"
+      }
+    },
+    {
+      "id": "2.5.4",
+      "docx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by moving the device also works another way",
+        "when": "content operated by device motion"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by moving the device also works another way",
+        "when": "content operated by device motion"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "user_test",
+        "note": "anything operated by moving the device also works another way",
+        "when": "content operated by device motion"
+      }
+    },
+    {
+      "id": "3.1.1",
+      "docx": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether the language set is the language of the text; the owner names it"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "PowerPoint stores language on each run of text; check it under Review, Language"
+      },
+      "pdf": {
+        "status": "checked_in_part",
+        "who": "author",
+        "note": "whether the language set is the language of the text; the owner names it"
+      }
+    },
+    {
+      "id": "3.1.2",
+      "docx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "passages in another language are marked as that language"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "passages in another language are marked as that language"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "author",
+        "note": "passages in another language are marked as that language"
+      }
+    },
+    {
+      "id": "3.2.1",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "nothing changes context when an item receives focus",
+        "when": "form fields or other controls"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "nothing changes context when an item receives focus",
+        "when": "form fields or other controls"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "nothing changes context when an item receives focus",
+        "when": "form fields or other controls"
+      }
+    },
+    {
+      "id": "3.2.2",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "changing a field's value does not change context without warning",
+        "when": "form fields or other controls"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "changing a field's value does not change context without warning",
+        "when": "form fields or other controls"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "changing a field's value does not change context without warning",
+        "when": "form fields or other controls"
+      }
+    },
+    {
+      "id": "3.2.3",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "repeated navigation appears in the same order across the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "repeated navigation appears in the same order across the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "repeated navigation appears in the same order across the set",
+        "when": "a set of related files rather than one file"
+      }
+    },
+    {
+      "id": "3.2.4",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "things that do the same job are labelled the same way across the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "things that do the same job are labelled the same way across the set",
+        "when": "a set of related files rather than one file"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "things that do the same job are labelled the same way across the set",
+        "when": "a set of related files rather than one file"
+      }
+    },
+    {
+      "id": "3.3.1",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "input errors are identified and described in text",
+        "when": "form fields"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "input errors are identified and described in text",
+        "when": "form fields"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "input errors are identified and described in text",
+        "when": "form fields"
+      }
+    },
+    {
+      "id": "3.3.2",
+      "docx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "fields and fill-in blanks have labels or instructions",
+        "when": "form fields or fill-in blanks"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "author",
+        "note": "fields and fill-in blanks have labels or instructions",
+        "when": "form fields or fill-in blanks"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "author",
+        "note": "fields and fill-in blanks have labels or instructions",
+        "when": "form fields or fill-in blanks"
+      }
+    },
+    {
+      "id": "3.3.3",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "known input errors come with a suggestion",
+        "when": "form fields"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "known input errors come with a suggestion",
+        "when": "form fields"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "known input errors come with a suggestion",
+        "when": "form fields"
+      }
+    },
+    {
+      "id": "3.3.4",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "submissions with legal, financial or test consequences can be reversed, checked or confirmed",
+        "when": "forms that submit legal, financial or test data"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "submissions with legal, financial or test consequences can be reversed, checked or confirmed",
+        "when": "forms that submit legal, financial or test data"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "submissions with legal, financial or test consequences can be reversed, checked or confirmed",
+        "when": "forms that submit legal, financial or test data"
+      }
+    },
+    {
+      "id": "4.1.1",
+      "docx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "W3C's note on this criterion: always satisfied for any content using HTML or XML; Word files are XML packages"
+      },
+      "pptx": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "W3C's note on this criterion: always satisfied for any content using HTML or XML; PowerPoint files are XML packages"
+      },
+      "pdf": {
+        "status": "not_checked",
+        "who": "expert",
+        "note": "a PDF is not markup in the HTML or XML sense; an expert checks the tag structure"
+      }
+    },
+    {
+      "id": "4.1.2",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "controls expose a name, a role and their state to assistive technology",
+        "when": "form fields or other controls"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "controls expose a name, a role and their state to assistive technology",
+        "when": "form fields or other controls"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "controls expose a name, a role and their state to assistive technology",
+        "when": "form fields or other controls"
+      }
+    },
+    {
+      "id": "4.1.3",
+      "docx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "status messages are announced without moving focus; rare in a file",
+        "when": "scripted status messages"
+      },
+      "pptx": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "status messages are announced without moving focus; rare in a file",
+        "when": "scripted status messages"
+      },
+      "pdf": {
+        "status": "if_present",
+        "who": "expert",
+        "note": "status messages are announced without moving focus; rare in a file",
+        "when": "scripted status messages"
+      }
+    }
+  ]
+}

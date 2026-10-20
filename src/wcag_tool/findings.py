@@ -13,6 +13,8 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum, StrEnum
 from typing import Any
 
+from wcag_tool import rules
+
 
 class Route(int, Enum):
     """Where a finding goes. Decided by what the fix needs, not by how easy it is."""
@@ -92,6 +94,53 @@ class Finding:
         raw = f"{self.asset}|{self.check}|{self.locator}".encode()
         self.id = hashlib.sha1(raw).hexdigest()[:12]  # noqa: S324 - identifier, not security
 
+    @classmethod
+    def from_check(
+        cls,
+        check: str,
+        *,
+        asset: str,
+        locator: str,
+        evidence: str,
+        fix_id: str | None = None,
+        proposal: str | None = None,
+    ) -> Finding:
+        """Build a finding whose criterion, route, closure and wording come from ``checks.json``.
+
+        The scanner supplies only what it saw: where, and the evidence. Everything the
+        skill and the bot must agree on comes from the rule files.
+
+        Args:
+            check: A check id from ``checks.json``.
+            asset: File name.
+            locator: Where in the file.
+            evidence: What the check saw.
+            fix_id: The filled-in fix id when the check's fix takes arguments.
+            proposal: A proposal worded for this instance, replacing the check's default.
+
+        Returns:
+            The finding.
+        """
+        rule_set = rules.load()
+        spec = rule_set.checks[check]
+        return cls(
+            check=check,
+            criterion=rule_set.criteria[spec.criterion].label,
+            asset=asset,
+            locator=locator,
+            evidence=evidence,
+            route=Route(spec.route),
+            closure_required=Closure(spec.closure),
+            confidence=Confidence(spec.confidence),
+            fix_id=rule_set.resolve_fix_id(check, fix_id),
+            proposal=proposal or spec.proposal,
+        )
+
+    @property
+    def criterion_id(self) -> str:
+        """The criterion number alone, e.g. ``2.4.2``."""
+        return self.criterion.split(" ", 1)[0]
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to plain JSON-able types."""
         data = asdict(self)
@@ -119,7 +168,10 @@ class Report:
         format: ``docx``, ``pptx`` or ``pdf``.
         findings: Every finding, open or otherwise.
         evaluated: Criteria the checks actually covered.
-        not_evaluated: Criteria the tool cannot judge for this format, with the reason.
+        not_evaluated: Everything the checks do not settle, for every A and AA criterion,
+            with who can judge it.
+        coverage: Criterion ids by status: ``checked_in_part``, ``not_checked``,
+            ``if_present``.
     """
 
     asset: str
@@ -127,6 +179,19 @@ class Report:
     findings: list[Finding] = field(default_factory=list)
     evaluated: list[str] = field(default_factory=list)
     not_evaluated: list[str] = field(default_factory=list)
+    coverage: dict[str, list[str]] = field(default_factory=dict)
+
+    @classmethod
+    def for_format(cls, asset: str, fmt: str) -> Report:
+        """An empty report whose evaluated, not-evaluated and coverage come from the rules."""
+        rule_set = rules.load()
+        return cls(
+            asset=asset,
+            format=fmt,
+            evaluated=rule_set.evaluated(fmt),
+            not_evaluated=rule_set.not_evaluated(fmt),
+            coverage=rule_set.coverage_summary(fmt),
+        )
 
     def by_route(self) -> dict[int, int]:
         """Count findings per route."""
@@ -144,6 +209,8 @@ class Report:
             "counts_by_route": self.by_route(),
             "evaluated": list(self.evaluated),
             "not_evaluated": list(self.not_evaluated),
+            "coverage": {k: list(v) for k, v in self.coverage.items()},
+            "criteria": rules.load().criteria_detail([f.criterion_id for f in self.findings]),
             "bounded_claim": BOUNDED_CLAIM,
         }
 

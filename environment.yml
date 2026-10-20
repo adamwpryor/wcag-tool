@@ -5,7 +5,8 @@ dependencies:
   - python=3.11
   - python-docx>=1.1
   - python-pptx>=1.0
-  - pymupdf>=1.24
+  - pypdf>=5.0
+  - jsonschema>=4.20
   - pytest>=8
   - ruff
   - black

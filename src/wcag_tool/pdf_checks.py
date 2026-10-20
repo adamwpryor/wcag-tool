@@ -4,55 +4,58 @@ The honest position on PDF: open-source tooling can read whether a file is
 tagged and can set its metadata, but it cannot build a tag tree. An untagged PDF
 is routed back to its source document for re-export, or to a person with Acrobat.
 The tool says so instead of implying it fixed the file.
+
+Built on ``pypdf`` (BSD licensed), so the checks can ship inside a shared skill.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import pymupdf
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DictionaryObject, NameObject, PdfObject, TextStringObject
 
-from wcag_tool.findings import Closure, Confidence, Finding, Report, Route
+from wcag_tool import rules
+from wcag_tool.findings import Finding, Report
 
-EVALUATED = [
-    "1.3.1 Info and Relationships (the file is tagged at all)",
-    "2.4.2 Page Titled (document title metadata)",
-    "3.1.1 Language of Page (document language)",
-    "Text is extractable (not a scanned image without OCR)",
-]
-
-NOT_EVALUATED = [
-    "1.1.1 alt text on figures: requires walking the structure tree; not analyzed yet",
-    "1.3.2 Meaningful Sequence: tag order vs visual order needs a person with a screen reader",
-    "Tables, headings and bookmarks inside the tag tree: not analyzed yet",
-    "1.4.3 Contrast: not analyzed yet",
-]
+# Both lists come from rules/coverage.json; edit them there.
+EVALUATED = rules.load().evaluated("pdf")
+NOT_EVALUATED = rules.load().not_evaluated("pdf")
 
 _SAMPLE_PAGES = 3
-_WRITABLE_METADATA = (
-    "author",
-    "creationDate",
-    "creator",
-    "keywords",
-    "modDate",
-    "producer",
-    "subject",
-    "title",
-)
 
 
-def _is_tagged(doc: pymupdf.Document) -> bool:
-    catalog = doc.pdf_catalog()
-    kind, value = doc.xref_get_key(catalog, "MarkInfo")
-    return kind == "dict" and "/Marked true" in value
+def _resolve(value: PdfObject | None) -> PdfObject | None:
+    return value.get_object() if value is not None else None
 
 
-def _language(doc: pymupdf.Document) -> str | None:
-    catalog = doc.pdf_catalog()
-    kind, value = doc.xref_get_key(catalog, "Lang")
-    if kind == "string" and value.strip():
-        return value.strip("() ")
-    return None
+def _is_tagged(reader: PdfReader) -> bool:
+    mark_info = _resolve(reader.root_object.get("/MarkInfo"))
+    if not isinstance(mark_info, DictionaryObject):
+        return False
+    return bool(_resolve(mark_info.get("/Marked")))
+
+
+def _language(reader: PdfReader) -> str | None:
+    lang = _resolve(reader.root_object.get("/Lang"))
+    text = str(lang).strip() if lang is not None else ""
+    return text or None
+
+
+def _image_count(page: DictionaryObject) -> int:
+    """Count image XObjects on a page without decoding them."""
+    resources = _resolve(page.get("/Resources"))
+    if not isinstance(resources, DictionaryObject):
+        return 0
+    xobjects = _resolve(resources.get("/XObject"))
+    if not isinstance(xobjects, DictionaryObject):
+        return 0
+    count = 0
+    for ref in xobjects.values():
+        xobject = _resolve(ref)
+        if isinstance(xobject, DictionaryObject) and xobject.get("/Subtype") == "/Image":
+            count += 1
+    return count
 
 
 def scan(path: Path) -> Report:
@@ -64,85 +67,58 @@ def scan(path: Path) -> Report:
     Returns:
         The report.
     """
-    doc = pymupdf.open(str(path))
+    reader = PdfReader(str(path))
     asset = path.name
-    report = Report(asset=asset, format="pdf", evaluated=EVALUATED, not_evaluated=NOT_EVALUATED)
+    report = Report.for_format(asset, "pdf")
     f = report.findings
 
-    if not (doc.metadata.get("title") or "").strip():
+    title = reader.metadata.title if reader.metadata is not None else None
+    if not (title or "").strip():
         f.append(
-            Finding(
-                check="pdf.missing-title",
-                criterion="2.4.2 Page Titled",
+            Finding.from_check(
+                "pdf.missing-title",
                 asset=asset,
                 locator="document info",
                 evidence="The title metadata is empty; readers announce the file name.",
-                route=Route.AUTO_FIX,
-                closure_required=Closure.AUTOMATICALLY_VERIFIED,
-                confidence=Confidence.HIGH,
-                fix_id="set-title",
             )
         )
-    if _language(doc) is None:
+    if _language(reader) is None:
         f.append(
-            Finding(
-                check="pdf.missing-language",
-                criterion="3.1.1 Language of Page",
+            Finding.from_check(
+                "pdf.missing-language",
                 asset=asset,
                 locator="document catalog",
                 evidence="No document language is set.",
-                route=Route.AUTO_FIX,
-                closure_required=Closure.AUTOMATICALLY_VERIFIED,
-                confidence=Confidence.HIGH,
-                fix_id="set-language",
             )
         )
-    if not _is_tagged(doc):
+    if not _is_tagged(reader):
         f.append(
-            Finding(
-                check="pdf.untagged",
-                criterion="1.3.1 Info and Relationships",
+            Finding.from_check(
+                "pdf.untagged",
                 asset=asset,
                 locator="document",
                 evidence=(
                     "The PDF has no tag structure. A screen reader gets a stream of text with "
                     "no headings, lists or tables."
                 ),
-                route=Route.CONTENT_OWNER,
-                closure_required=Closure.EXPERT_VERIFIED,
-                confidence=Confidence.HIGH,
-                proposal=(
-                    "Re-export from the source Word or PowerPoint file after fixing it there; the "
-                    "export carries the tags. If there is no source, this file needs Acrobat's "
-                    "auto-tag followed by a human check. This tool cannot build a tag tree."
-                ),
             )
         )
 
-    sampled = min(_SAMPLE_PAGES, doc.page_count)
-    if sampled:
-        text_chars = sum(len(doc[i].get_text().strip()) for i in range(sampled))
-        image_count = sum(len(doc[i].get_images(full=False)) for i in range(sampled))
+    pages = reader.pages[:_SAMPLE_PAGES]
+    if pages:
+        text_chars = sum(len((page.extract_text() or "").strip()) for page in pages)
+        image_count = sum(_image_count(page) for page in pages)
         if text_chars == 0 and image_count > 0:
             f.append(
-                Finding(
-                    check="pdf.scanned-no-text",
-                    criterion="1.1.1 Non-text Content",
+                Finding.from_check(
+                    "pdf.scanned-no-text",
                     asset=asset,
-                    locator=f"pages 1-{sampled}",
+                    locator=f"pages 1-{len(pages)}",
                     evidence=(
                         "Pages are images with no extractable text. A screen reader gets nothing."
                     ),
-                    route=Route.CONTENT_OWNER,
-                    closure_required=Closure.EXPERT_VERIFIED,
-                    confidence=Confidence.HIGH,
-                    proposal=(
-                        "Find the original document, or run OCR and then check the recognized "
-                        "text against the page."
-                    ),
                 )
             )
-    doc.close()
     return report
 
 
@@ -158,24 +134,21 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
     Returns:
         A dict with ``applied`` and ``failed``.
     """
-    doc = pymupdf.open(str(path))
+    writer = PdfWriter(clone_from=str(path))
     applied: dict[str, str] = {}
     failed: dict[str, str] = {}
     for fix_id in fix_ids:
         if fix_id == "set-title":
             title = path.stem.replace("_", " ").replace("-", " ")
-            current = doc.metadata or {}
-            metadata = {k: current.get(k, "") for k in _WRITABLE_METADATA}
-            metadata["title"] = title
-            doc.set_metadata(metadata)
+            writer.add_metadata({"/Title": title})
             applied[fix_id] = (
                 f"title set to {title!r} from the file name; check it reads as a title"
             )
         elif fix_id == "set-language":
-            doc.xref_set_key(doc.pdf_catalog(), "Lang", f"({language})")
+            writer.root_object[NameObject("/Lang")] = TextStringObject(language)
             applied[fix_id] = f"language set to {language}"
         else:
             failed[fix_id] = "unknown fix"
-    doc.save(str(output), garbage=0)
-    doc.close()
+    with output.open("wb") as handle:
+        writer.write(handle)
     return {"applied": applied, "failed": failed}

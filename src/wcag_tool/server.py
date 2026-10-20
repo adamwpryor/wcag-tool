@@ -1,4 +1,4 @@
-"""The MCP server: three tools over stdio.
+"""The MCP server: five tools over stdio.
 
 Runs locally. Files never leave the machine; the only thing that crosses the
 wire is the report. Any MCP client with its own model and API key can use it.
@@ -12,18 +12,25 @@ from typing import Any
 
 from mcp.server import MCPServer
 
-from wcag_tool import engine, log
+from wcag_tool import engine, log, rules
 from wcag_tool.findings import ROUTES_SUMMARY
 
 INSTRUCTIONS = (
     "Accessibility triage for course documents (DOCX, PPTX, PDF). scan_document returns "
     "routed findings for one file; scan_folder does a pile and adds Route 5 candidates and a "
     "ready-made routed table; fix_document repairs only what is deterministic unless a person "
-    "names a specific fix; describe_routes explains the five routes. Never describe a clean "
-    "report as conformance. Alt text is always a proposal for a person to confirm."
+    "names a specific fix; describe_routes explains the five routes; explain_criterion quotes "
+    "W3C's text for one WCAG criterion and says what the tool can and cannot judge about it. "
+    "Never describe a clean report as conformance. Alt text is always a proposal for a person "
+    "to confirm. Explain a criterion from its quoted text, not from memory."
 )
 
 mcp = MCPServer("wcag-tool", instructions=INSTRUCTIONS)
+
+
+def _path(text: str) -> Path:
+    """A path as a person or a model writes it, with ``~`` meaning the home folder."""
+    return Path(text).expanduser()
 
 
 @mcp.tool()
@@ -32,13 +39,16 @@ def scan_document(path: str) -> dict[str, Any]:
 
     Each finding carries a WCAG criterion, a route (1 auto-fix, 2 content owner,
     3 manual test, 4 expedited, 5 systemic), the closure evidence it needs, and
-    a fix_id when the tool can repair it. The report also lists which criteria
-    were evaluated and which were not. A clean report is not a conformance claim.
+    a fix_id when the tool can repair it. The report also lists what was
+    evaluated, what was not (every WCAG 2.1 A and AA criterion appears, with who
+    can judge it), `coverage` (criterion numbers by status), and `criteria`
+    (W3C's text for each criterion a finding names). A clean report is not a
+    conformance claim.
 
     Args:
         path: Absolute or relative path to the file on this machine.
     """
-    return engine.scan(Path(path)).to_dict()
+    return engine.scan(_path(path)).to_dict()
 
 
 @mcp.tool()
@@ -68,9 +78,9 @@ def fix_document(
             by the person who owns the file.
     """
     return engine.fix(
-        Path(path),
+        _path(path),
         apply=apply,
-        output=Path(output_path) if output_path else None,
+        output=_path(output_path) if output_path else None,
         language=language,
     )
 
@@ -89,13 +99,54 @@ def scan_folder(path: str, recursive: bool = True) -> dict[str, Any]:
         path: Folder on this machine.
         recursive: Descend into subfolders. Defaults to true.
     """
-    return engine.scan_folder(Path(path), recursive=recursive).to_dict()
+    return engine.scan_folder(_path(path), recursive=recursive).to_dict()
 
 
 @mcp.tool()
 def describe_routes() -> str:
     """Explain the five routes and four closure states every finding uses."""
     return ROUTES_SUMMARY
+
+
+@mcp.tool()
+def explain_criterion(criterion: str) -> dict[str, Any]:
+    """Quote one WCAG 2.1 A or AA success criterion and say what this tool can judge of it.
+
+    Returns W3C's normative text, the link to W3C's Understanding page, and for
+    Word, PowerPoint and PDF: whether a check covers it in part, which checks,
+    what a person still judges, and who (the author, an expert, or a
+    screen-reader task test). Use it to explain why a finding matters, in W3C's
+    words rather than from memory.
+
+    Args:
+        criterion: The criterion number, e.g. "1.3.1". A name after the number is ignored.
+    """
+    rule_set = rules.load()
+    cid = criterion.strip().split(" ", 1)[0]
+    if cid not in rule_set.criteria:
+        return {
+            "error": f"{cid!r} is not a WCAG 2.1 Level A or AA success criterion",
+            "known": list(rule_set.criteria),
+        }
+    c = rule_set.criteria[cid]
+    return {
+        "id": c.id,
+        "name": c.name,
+        "level": c.level,
+        "text": c.text,
+        "understanding": c.understanding,
+        "source": rule_set.source,
+        "formats": {
+            fmt: {
+                "status": cell.status,
+                "checks": [k.id for k in rule_set.checks_for(fmt, cid)],
+                "still_to_judge": cell.note,
+                "who": rules.WHO[cell.who],
+                **({"applies_when": cell.when} if cell.when else {}),
+            }
+            for fmt, cell in rule_set.coverage[cid].items()
+        },
+    }
 
 
 def main() -> None:

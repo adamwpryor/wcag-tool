@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/adamwpryor/wcag-tool/rules/coverage.schema.json",
+  "title": "wcag-tool coverage",
+  "type": "object",
+  "required": ["criteria"],
+  "additionalProperties": false,
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "who", "note"],
+      "properties": {
+        "status": { "enum": ["checked_in_part", "not_checked", "if_present"] },
+        "who": { "enum": ["author", "expert", "user_test"] },
+        "note": { "type": "string", "minLength": 1 },
+        "when": { "type": "string", "minLength": 1 }
+      },
+      "if": { "properties": { "status": { "const": "if_present" } } },
+      "then": { "required": ["when"] },
+      "else": { "not": { "required": ["when"] } }
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "about": { "type": "string" },
+    "criteria": {
+      "type": "array",
+      "minItems": 50,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "docx", "pptx", "pdf"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[1-4]\\.[0-9]+\\.[0-9]+$" },
+          "docx": { "$ref": "#/$defs/cell" },
+          "pptx": { "$ref": "#/$defs/cell" },
+          "pdf": { "$ref": "#/$defs/cell" }
+        }
+      }
+    }
+  }
+}

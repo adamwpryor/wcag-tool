@@ -18,6 +18,11 @@ from wcag_tool.demo import make_demo_set
 from wcag_tool.report import render_markdown
 
 
+def _path(text: str) -> Path:
+    """A path as typed, with ``~`` meaning the home folder on every platform."""
+    return Path(text).expanduser()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="wcag-tool",
@@ -30,14 +35,14 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     scan = sub.add_parser("scan", help="scan a file or a folder and print the routed table")
-    scan.add_argument("path", type=Path)
+    scan.add_argument("path", type=_path)
     scan.add_argument("--json", action="store_true", help="print JSON instead of Markdown")
     scan.add_argument("--no-recursive", action="store_true", help="do not descend into subfolders")
 
     fix = sub.add_parser("fix", help="write a remediated copy of one file and a JSON record")
-    fix.add_argument("path", type=Path)
+    fix.add_argument("path", type=_path)
     fix.add_argument("--apply", action="append", default=[], metavar="FIX_ID")
-    fix.add_argument("--output", type=Path, default=None)
+    fix.add_argument("--output", type=_path, default=None)
     fix.add_argument(
         "--language",
         default=None,
@@ -45,7 +50,7 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     demo = sub.add_parser("demo", help="write fictional files with known defects into a folder")
-    demo.add_argument("directory", type=Path)
+    demo.add_argument("directory", type=_path)
 
     sub.add_parser("serve", help="start the MCP server over stdio (the default)")
     return parser
@@ -74,6 +79,11 @@ def main(argv: list[str] | None = None) -> int:
 
         mcp.run()
         return 0
+
+    # Windows consoles default to a legacy code page; reports carry file names and
+    # punctuation it cannot encode. The MCP server writes bytes and is unaffected.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
 
     try:
         if args.command == "scan":

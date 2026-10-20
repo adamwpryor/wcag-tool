@@ -53,6 +53,11 @@ def test_report_shape(bad_pdf: Path) -> None:
         "counts_by_route",
         "evaluated",
         "not_evaluated",
+        "coverage",
+        "criteria",
         "bounded_claim",
     }
     assert "not a conformance claim" in data["bounded_claim"]
+    # Every finding's criterion arrives with W3C's own words and the Understanding link.
+    assert set(data["criteria"]) == {f["criterion"].split()[0] for f in data["findings"]}
+    assert all(c["text"] and c["understanding"] for c in data["criteria"].values())

@@ -12,6 +12,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
+from wcag_tool import rules
 from wcag_tool.findings import BOUNDED_CLAIM, Finding, Report, Route
 
 # A sentence ends at a period followed by whitespace, so "image.png" stays whole.
@@ -58,35 +59,6 @@ class Systemic:
         }
 
 
-_SYSTEMIC_PROPOSALS = {
-    "docx.missing-title": "Set the title in the template's document properties.",
-    "docx.missing-language": "Set the default language in the template's styles.",
-    "docx.table-no-header": "Mark the header row in the template's table style, once.",
-    "docx.fake-heading": (
-        "Put Heading styles on the template's section titles so copies inherit them."
-    ),
-    "docx.link-text": "Fix the shared link text in the template or the source the files copy from.",
-    "docx.empty-heading": "Remove the empty heading from the template; every copy inherited it.",
-    "docx.heading-skip": "Fix the heading levels in the template's outline once.",
-    "docx.image-missing-alt": (
-        "If the same image is in every file (a logo, a banner), set its alt text or mark it "
-        "decorative in the template."
-    ),
-    "pptx.image-missing-alt": (
-        "If the same image is on every slide (a logo), set its alt text or mark it decorative in "
-        "the slide master."
-    ),
-    "pptx.table-no-header": "Mark the header row in the slide master's table style.",
-    "pptx.missing-title": "Set the title in the slide master's presentation properties.",
-    "pptx.slide-no-title": "Give every layout in the slide master a title placeholder.",
-    "pdf.untagged": (
-        "Fix the export: 'Document structure tags for accessibility' on in Word and PowerPoint."
-    ),
-    "pdf.missing-language": "Set the language in the source files; the export carries it.",
-    "pdf.missing-title": "Set the title in the source files; the export carries it.",
-}
-
-
 @dataclass
 class Batch:
     """Several files scanned together.
@@ -110,6 +82,7 @@ class Batch:
             for finding in report.findings:
                 per_check[finding.check].add(report.asset)
                 criterion[finding.check] = finding.criterion
+        checks = rules.load().checks
         out: list[Systemic] = []
         for check, assets in sorted(per_check.items()):
             n = len(assets)
@@ -120,9 +93,7 @@ class Batch:
                         criterion=criterion[check],
                         files=n,
                         total=total,
-                        proposal=_SYSTEMIC_PROPOSALS.get(
-                            check, "Find what these files have in common and fix it there."
-                        ),
+                        proposal=checks[check].template_fix,
                     )
                 )
         return out
@@ -135,23 +106,6 @@ class Batch:
                 counts[route] += n
         return counts
 
-    @staticmethod
-    def _union(lists: list[list[str]]) -> list[str]:
-        seen: list[str] = []
-        for items in lists:
-            for item in items:
-                if item not in seen:
-                    seen.append(item)
-        return seen
-
-    def not_evaluated(self) -> list[str]:
-        """The union of every file's not-evaluated list, in first-seen order."""
-        return self._union([r.not_evaluated for r in self.reports])
-
-    def evaluated(self) -> list[str]:
-        """The union of every file's evaluated list, in first-seen order."""
-        return self._union([r.evaluated for r in self.reports])
-
     def formats(self) -> dict[str, int]:
         """How many files of each format were scanned."""
         counts: dict[str, int] = {}
@@ -159,17 +113,41 @@ class Batch:
             counts[report.format] = counts.get(report.format, 0) + 1
         return counts
 
+    def evaluated(self) -> dict[str, list[str]]:
+        """What the checks look at, once per format in the pile."""
+        return {fmt: rules.load().evaluated(fmt) for fmt in self.formats()}
+
+    def not_evaluated(self) -> dict[str, list[str]]:
+        """Everything the checks do not settle, once per format in the pile."""
+        return {fmt: rules.load().not_evaluated(fmt) for fmt in self.formats()}
+
+    def coverage(self) -> dict[str, dict[str, list[str]]]:
+        """Criterion ids by status, once per format in the pile."""
+        return {fmt: rules.load().coverage_summary(fmt) for fmt in self.formats()}
+
     def to_dict(self) -> dict[str, Any]:
-        """Serialize to plain types, including the rendered Markdown."""
+        """Serialize to plain types, including the rendered Markdown.
+
+        Per-format lists (evaluated, not evaluated, coverage) and the quoted criteria
+        appear once for the pile rather than once per file, so a large pile stays
+        readable by the assistant receiving it.
+        """
+        per_file = ("evaluated", "not_evaluated", "coverage", "criteria", "bounded_claim")
+        reports = [
+            {k: v for k, v in r.to_dict().items() if k not in per_file} for r in self.reports
+        ]
+        found = [f.criterion_id for r in self.reports for f in r.findings]
         return {
             "files": len(self.reports),
             "formats": self.formats(),
             "skipped": list(self.skipped),
             "counts_by_route": self.counts_by_route(),
             "systemic": [s.to_dict() for s in self.systemic()],
-            "reports": [r.to_dict() for r in self.reports],
+            "reports": reports,
             "evaluated": self.evaluated(),
             "not_evaluated": self.not_evaluated(),
+            "coverage": self.coverage(),
+            "criteria": rules.load().criteria_detail(found),
             "bounded_claim": BOUNDED_CLAIM,
             "markdown": render_markdown(self),
         }
@@ -254,8 +232,13 @@ def render_markdown(batch: Batch) -> str:
     lines.append("")
     lines.append("## Not evaluated")
     lines.append("")
-    for note in batch.not_evaluated():
-        lines.append(f"- {note}")
+    lines.append(
+        "Nothing below was checked, and the table above is bounded by it. The JSON result's "
+        "`not_evaluated` says what each criterion needs and who can judge it."
+    )
+    for fmt, n in batch.formats().items():
+        lines.append("")
+        lines.append(rules.load().markdown_not_evaluated(fmt, files=n, details="the JSON result"))
 
     lines.append("")
     lines.append("## What you may say")

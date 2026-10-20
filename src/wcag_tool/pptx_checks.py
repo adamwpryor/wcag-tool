@@ -12,22 +12,13 @@ from pathlib import Path
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
+from wcag_tool import rules
 from wcag_tool.alt import is_missing_or_placeholder
-from wcag_tool.findings import Closure, Confidence, Finding, Report, Route
+from wcag_tool.findings import Finding, Report
 
-EVALUATED = [
-    "1.1.1 Non-text Content (alt text present and not a filename or auto-generated phrase)",
-    "1.3.1 Info and Relationships (every slide has a title placeholder with text; tables have a "
-    "header row)",
-    "2.4.2 Page Titled (presentation title)",
-]
-
-NOT_EVALUATED = [
-    "1.3.2 Meaningful Sequence: reading order follows the selection pane and only a person "
-    "can judge it",
-    "1.4.3 Contrast: not analyzed yet",
-    "1.2.x Audio and video: embedded media captions are not analyzed",
-]
+# Both lists come from rules/coverage.json; edit them there.
+EVALUATED = rules.load().evaluated("pptx")
+NOT_EVALUATED = rules.load().not_evaluated("pptx")
 
 
 def scan(path: Path) -> Report:
@@ -41,21 +32,16 @@ def scan(path: Path) -> Report:
     """
     prs = Presentation(str(path))
     asset = path.name
-    report = Report(asset=asset, format="pptx", evaluated=EVALUATED, not_evaluated=NOT_EVALUATED)
+    report = Report.for_format(asset, "pptx")
     f = report.findings
 
     if not (prs.core_properties.title or "").strip():
         f.append(
-            Finding(
-                check="pptx.missing-title",
-                criterion="2.4.2 Page Titled",
+            Finding.from_check(
+                "pptx.missing-title",
                 asset=asset,
                 locator="core properties",
                 evidence="The presentation title property is empty.",
-                route=Route.AUTO_FIX,
-                closure_required=Closure.AUTOMATICALLY_VERIFIED,
-                confidence=Confidence.HIGH,
-                fix_id="set-title",
             )
         )
 
@@ -63,41 +49,25 @@ def scan(path: Path) -> Report:
         title_shape = slide.shapes.title
         if title_shape is None or not title_shape.has_text_frame or not title_shape.text.strip():
             f.append(
-                Finding(
-                    check="pptx.slide-no-title",
-                    criterion="1.3.1 Info and Relationships",
+                Finding.from_check(
+                    "pptx.slide-no-title",
                     asset=asset,
                     locator=f"slide {number}",
                     evidence=(
                         "No title placeholder with text; screen readers announce the slide by "
                         "number only."
                     ),
-                    route=Route.CONTENT_OWNER,
-                    closure_required=Closure.CONTENT_OWNER_VERIFIED,
-                    confidence=Confidence.HIGH,
-                    proposal=(
-                        "Give the slide a unique title in the title placeholder. It may be "
-                        "visually hidden, but it must exist."
-                    ),
                 )
             )
         for shape_index, shape in enumerate(slide.shapes):
             if shape.has_table and not shape.table.first_row:
                 f.append(
-                    Finding(
-                        check="pptx.table-no-header",
-                        criterion="1.3.1 Info and Relationships",
+                    Finding.from_check(
+                        "pptx.table-no-header",
                         asset=asset,
                         locator=f"slide {number}, {shape.name}",
                         evidence="The table has no header row marked.",
-                        route=Route.CONTENT_OWNER,
-                        closure_required=Closure.CONTENT_OWNER_VERIFIED,
-                        confidence=Confidence.HIGH,
                         fix_id=f"mark-header-row:{number}:{shape_index}",
-                        proposal=(
-                            "If the first row holds column names, mark it as the header row. "
-                            "If the table is used for layout, replace it with text boxes."
-                        ),
                     )
                 )
                 continue
@@ -116,19 +86,11 @@ def scan(path: Path) -> Report:
                 )
             )
             f.append(
-                Finding(
-                    check="pptx.image-missing-alt",
-                    criterion="1.1.1 Non-text Content",
+                Finding.from_check(
+                    "pptx.image-missing-alt",
                     asset=asset,
                     locator=f"slide {number}, {shape.name}",
                     evidence=evidence,
-                    route=Route.CONTENT_OWNER,
-                    closure_required=Closure.CONTENT_OWNER_VERIFIED,
-                    confidence=Confidence.HIGH,
-                    proposal=(
-                        "Write one sentence saying what this picture conveys on this slide, or "
-                        "mark it decorative."
-                    ),
                 )
             )
     return report

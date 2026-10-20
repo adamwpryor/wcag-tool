@@ -9,7 +9,13 @@ from mcp import Client, StdioServerParameters
 
 from wcag_tool.server import mcp
 
-EXPECTED_TOOLS = {"scan_document", "fix_document", "scan_folder", "describe_routes"}
+EXPECTED_TOOLS = {
+    "scan_document",
+    "fix_document",
+    "scan_folder",
+    "describe_routes",
+    "explain_criterion",
+}
 
 
 def _structured(result) -> dict:  # type: ignore[no-untyped-def]
@@ -30,6 +36,16 @@ def test_tools_in_memory(bad_docx: Path) -> None:
             assert "bounded_claim" in data
             routes = await client.call_tool("describe_routes", {})
             assert "Five routes" in routes.content[0].text
+            explained = _structured(
+                await client.call_tool("explain_criterion", {"criterion": "1.3.1"})
+            )
+            assert explained["name"] == "Info and Relationships"
+            assert explained["text"].startswith("Information, structure, and relationships")
+            assert "docx.table-no-header" in explained["formats"]["docx"]["checks"]
+            unknown = _structured(
+                await client.call_tool("explain_criterion", {"criterion": "9.9.9"})
+            )
+            assert "error" in unknown
 
     asyncio.run(run())
 
