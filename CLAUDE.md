@@ -8,13 +8,18 @@ published so any campus can use it:
 
 | Artifact | Lives in | Built by | Consumed as |
 | :--- | :--- | :--- | :--- |
-| **Skill** (the rules) | `skill/SKILL.md` + `skill/references/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip, README |
-| **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet only) | By hand, from `dist/wcag-triage.md` | Hosted bot, no install |
+| **Skill** (the prose) | `skill/SKILL.md` + `skill/references/` + `skill/scripts/` + `skill/tests/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip (with a read-only scanner and a test kit), README |
+| **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet only) | By hand, from `dist/wcag-triage-bot/` | Hosted bot, no install, no code |
 | **MCP server + CLI** | `src/wcag_tool/` | `pip install -e .` → `wcag-tool` | Local stdio server in any MCP client (no args), or `scan` / `fix` / `demo` subcommands |
 
-**`skill/` is the source of truth for the rules.** The MCP tool descriptions, the bot
+**The rules are data in `src/wcag_tool/rules/`**: `wcag21.json` (W3C's text, extracted by
+`tools/extract_wcag.py`), `checks.json` (every check), `coverage.json` (every criterion × format).
+`wcag_tool.rules` refuses to load if they disagree. The scanners, the tables in `checks.md`, the
+whole of `criteria.md`, the Route 5 proposals and the bot's knowledge files are built from them.
+**`skill/` is the source of truth for the prose.** The MCP tool descriptions, the bot
 instructions, and the reference pages must say the same thing. If a route or a closure state
-changes, change `skill/references/routes.md` and `src/wcag_tool/findings.py` in the same commit.
+changes, change `skill/references/routes.md`, `src/wcag_tool/findings.py`, `rules.py` and the
+schemas in the same commit. Never hand-edit a `<!-- generated -->` block or `criteria.md`.
 
 The origin and the session-facing materials stay in the private `ace-1` repo
 (`output/ace/2026.10/October_Build/`). This repo never carries session logistics, speaker names,
@@ -55,7 +60,9 @@ sponsor material, or anything from a real course file.
 ```bash
 pytest -q                              # tests build their own fixtures; two run the real MCP wire
 ruff check . && black --check . && mypy
-python tools/build_skill.py            # regenerates dist/ (gitignored)
+python tools/build_skill.py            # regenerates checks.md blocks, criteria.md, and dist/
+python tools/build_skill.py --check    # exit 1 if a generated page is stale (a test runs this)
+python skill/scripts/selftest.py       # scanner vs tests/expected; --update after a deliberate change
 wcag-tool                              # starts the stdio server; blocks waiting for a client
 wcag-tool demo ./sample                # five fictional files for the live demo
 wcag-tool scan ./sample                # routed table with Route 5 lines; --json for data
@@ -65,26 +72,33 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --json
 
 | Module | Owns |
 | :--- | :--- |
-| `findings.py` | `Finding`, `Report`, the routes and closure enums, the bounded claim |
+| `rules.py` + `rules/*.json` | The rule set as data: load, cross-check, evaluated / not-evaluated lists, Markdown renderers |
+| `findings.py` | `Finding` (built with `Finding.from_check`), `Report`, the routes and closure enums, the bounded claim |
 | `report.py` | `Batch` (a pile), Route 5 aggregation, `render_markdown` |
 | `engine.py` | dispatch by extension, `scan`, `scan_many`, `scan_folder`, `fix` |
 | `docx_checks.py` / `docx_fixes.py`, `pptx_checks.py`, `pdf_checks.py` | per-format checks and fixes |
 | `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |
 | `demo.py` | fictional fixture files, shared by tests and the `demo` command |
-| `server.py` | the four MCP tools |
+| `server.py` | the five MCP tools |
 | `cli.py` | the console entry point |
 
 ## Adding a check
 
-1. Add it to the format's `scan()` with a `check` id of the form `<format>.<kebab-name>`, the
-   WCAG criterion, a route, a closure state, a confidence, and a `proposal` if Route 2.
-2. Add the criterion to that module's `EVALUATED` list, or the gap to `NOT_EVALUATED`.
-3. Add the row to `skill/references/checks.md` in the same commit.
-4. Add the defect to the fixture builders in `src/wcag_tool/demo.py` (they also feed the live
-   demo), update the expected values in ace-1's `October_Build/20_Test_Kit.md`, and assert it.
-5. If it carries a `fix_id`, add the fix to the format's `apply()` and decide its route honestly.
+1. Add the check to `src/wcag_tool/rules/checks.json`: id `<format>.<kebab-name>`, criterion,
+   route, closure, confidence, `fix_id` template, wording, `template_fix`, `from_text`.
+2. Set that criterion's cell in `coverage.json` to `checked_in_part`, with what a person still
+   judges. `rules.load()` refuses a check whose cell says otherwise.
+3. In the format's `scan()`, append `Finding.from_check("<id>", asset=, locator=, evidence=)`.
+   Everything else comes from the JSON.
+4. Add the defect to a fixture builder in `src/wcag_tool/demo.py`: the demo pile if it belongs
+   in the live demo (then update the expected values in ace-1's `October_Build/20_Test_Kit.md`),
+   otherwise `make_test_set`. A test fails if any check never fires.
+5. Run `python tools/build_skill.py` (regenerates `checks.md` and `criteria.md`) and
+   `python skill/scripts/selftest.py --update`, and read the diff of `skill/tests/expected/`.
+6. If it carries a `fix_id`, add the fix to the format's `apply()` and decide its route honestly.
 
 ## Where things were left
 
 See `docs/HANDOFF_2026-10-19.md` for the compacted history and the next steps, and
-`docs/DECISIONS.md` for why the repo is shaped this way.
+`docs/DECISIONS.md` for why the repo is shaped this way (§8–11 cover the rules-as-data move,
+the decision against a vector database, pypdf, and the three tiers).

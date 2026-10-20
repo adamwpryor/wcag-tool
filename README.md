@@ -34,27 +34,47 @@ PowerPoint source for re-export, or to a person with Acrobat.
 Files never leave your computer. Any MCP client works: Claude Desktop, Claude Code, ChatGPT
 desktop, Gemini CLI, Cursor, VS Code.
 
-```bash
-pip install wcag-tool          # or: conda env create -f environment.yml
-wcag-tool                      # runs over stdio; your client launches it
-```
+**Quick start: about ten minutes, no Python setup.** It uses
+[uv](https://docs.astral.sh/uv/), which fetches the right Python and the tool on first launch.
 
-Claude Desktop configuration, for example:
+1. Install uv, once.
+   - macOS or Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+2. Find where it put `uvx`: `which uvx` on macOS or Linux, `where uvx` on Windows. Claude Desktop
+   does not read your shell's PATH, so the configuration below uses that full path.
+3. In Claude Desktop, open *Settings → Developer → Edit Config* and add, with your path in
+   `command`:
 
-```json
-{
-  "mcpServers": {
-    "wcag-tool": { "command": "wcag-tool" }
-  }
-}
-```
+   ```json
+   {
+     "mcpServers": {
+       "wcag-tool": {
+         "command": "/Users/you/.local/bin/uvx",
+         "args": ["--from", "git+https://github.com/adamwpryor/wcag-tool@v0.2.0", "wcag-tool"]
+       }
+     }
+   }
+   ```
 
-Four tools: `scan_document(path)`, `scan_folder(path)`, `fix_document(path, apply=[...])`,
-`describe_routes()`. `scan_folder` is the one to start with: it adds Route 5 candidates (a defect
-that recurs across files, so the fix is the template) and returns the routed table ready to fill
-in. `fix_document` writes a copy next to the original and a JSON record of before and after. The
-original is never overwritten. Route 2 fixes are applied only when you name their `fix_id` after
-confirming the proposal.
+   On Windows the path looks like `"C:\\Users\\you\\.local\\bin\\uvx.exe"`, with every
+   backslash doubled. In Claude Code instead:
+   `claude mcp add wcag-tool -- uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool`
+4. Restart Claude Desktop. The first launch takes a minute while uv downloads; after that it is
+   instant. Make some fictional files to try it on:
+   `uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool demo ~/wcag-demo`
+5. In a new chat: *"Triage the files in ~/wcag-demo."* Then try *"Is it compliant now?"*
+
+**With pip or conda instead:** `pip install git+https://github.com/adamwpryor/wcag-tool` (or
+`conda env create -f environment.yml` in a clone), then `"command": "wcag-tool"` with the full
+path to that executable.
+
+Five tools: `scan_document(path)`, `scan_folder(path)`, `fix_document(path, apply=[...])`,
+`describe_routes()`, `explain_criterion(criterion)`. `scan_folder` is the one to start with: it
+adds Route 5 candidates (a defect that recurs across files, so the fix is the template) and
+returns the routed table ready to fill in. `fix_document` writes a copy next to the original and a
+JSON record of before and after. The original is never overwritten. Route 2 fixes are applied only
+when you name their `fix_id` after confirming the proposal. `explain_criterion("1.3.1")` quotes
+W3C's text for a criterion and says what the tool can and cannot judge about it in each format.
 
 **No MCP client? The same engine runs from the command line.**
 
@@ -69,19 +89,32 @@ fact nobody stated.
 
 ### 2. The skill, in any assistant
 
-`dist/wcag-triage.md` is one file to paste into Claude, ChatGPT, Gemini, or a BoodleBox bot's
-instructions. `dist/wcag-triage-skill.zip` is the same material as a skill folder. Build them with:
+`dist/wcag-triage.md` is one file to paste into Claude, ChatGPT or Gemini.
+`dist/wcag-triage-skill.zip` is the skill folder, and it does more: where the assistant can run
+code, `scripts/scan.py` reads the files themselves (read-only), and `scripts/selftest.py` checks
+the scanner against fictional files with known answers. `TESTING.md` inside it says how to check
+the skill works before you share it. Build them with:
 
 ```bash
 python tools/build_skill.py
 ```
 
-The rules live in `skill/`. See `skill/README.md` for how to use the set.
+The prose lives in `skill/`; the rules live as data in `src/wcag_tool/rules/`. See
+`skill/README.md` for how to use the set.
 
 ### 3. The BoodleBox bot
 
-`bot/BOODLEBOX_BOT.md` is the build sheet: the instruction file to paste, the files to attach, the
-settings, and the five-question known-answer test to run before publishing.
+`bot/BOODLEBOX_BOT.md` is the build sheet: the instruction file to paste, the knowledge files to
+attach (all built into `dist/wcag-triage-bot/`), the settings, and the tests to run before
+publishing.
+
+## The rules, as data
+
+`src/wcag_tool/rules/` holds three JSON files with schemas: `wcag21.json` (the 50 A and AA
+criteria, quoted from W3C), `checks.json` (every check: criterion, route, closure, fix, wording),
+and `coverage.json` (for every criterion in every format, what is checked in part, what is not,
+and who judges the rest). The scanner, the skill's reference pages and the bot's knowledge files
+are all built from them, and the build fails if they disagree. See `docs/DECISIONS.md` §8.
 
 ## Development
 
@@ -89,7 +122,8 @@ settings, and the five-question known-answer test to run before publishing.
 conda env create -f environment.yml
 conda activate wcag-tool
 pytest -q
-ruff check . && black --check .
+ruff check . && black --check . && mypy
+python tools/build_skill.py --check     # generated reference pages are current
 ```
 
 Tests generate their own fixtures. No real course file is ever committed; `.gitignore` refuses
