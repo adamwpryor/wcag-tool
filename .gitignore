@@ -16,6 +16,9 @@ build/
 # Build transport between machines (mode 700, hash-verified, deleted after use)
 .scratch/
 
+# Development notes (handoffs, decision log) stay local
+docs/
+
 # Editors
 .vscode/
 .idea/

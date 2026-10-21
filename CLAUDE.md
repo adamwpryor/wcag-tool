@@ -108,6 +108,7 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --json
 
 ## Where things were left
 
-See `docs/HANDOFF_2026-10-19.md` for the compacted history and the next steps, and
+`docs/` is local development material and is git-ignored, so it exists only on a working copy
+that has it. See `docs/HANDOFF_2026-10-19.md` for the compacted history and the next steps, and
 `docs/DECISIONS.md` for why the repo is shaped this way (§8–11 cover the rules-as-data move,
 the decision against a vector database, pypdf, and the three tiers).

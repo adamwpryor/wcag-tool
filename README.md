@@ -246,8 +246,7 @@ wcag-tool fix ./sample/syllabus_section_01.docx --language en-US --apply mark-he
 ```
 
 How the repository is organized is in [ABOUT.md](ABOUT.md#how-the-pieces-fit-together) and
-[CLAUDE.md](CLAUDE.md); the reasoning behind each design choice is in
-[docs/DECISIONS.md](docs/DECISIONS.md). Tests build their own fictional files, and no real course
+[CLAUDE.md](CLAUDE.md). Tests build their own fictional files, and no real course
 file is ever committed.
 
 ## License

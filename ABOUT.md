@@ -322,8 +322,7 @@ from one of them anyway, because a federal rule with a named standard and a name
 well beyond the institutions it covers. None of this is legal advice; what applies to your campus
 is a question for your accessibility coordinator or your counsel.
 
-The toolkit is MIT licensed, so take it, adapt it to your campus, and make it better. The reasoning
-behind each design choice is recorded in [docs/DECISIONS.md](docs/DECISIONS.md). Criterion text in
+The toolkit is MIT licensed, so take it, adapt it to your campus, and make it better. Criterion text in
 the reference pages and rules files is quoted from [WCAG 2.1](https://www.w3.org/TR/WCAG21/),
 Copyright © W3C, under the
 [W3C Document License](https://www.w3.org/copyright/document-license-2023/).
