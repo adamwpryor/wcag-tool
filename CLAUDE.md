@@ -32,12 +32,12 @@ fixed); a test fails if a splice is missing or a tool name leaks in. Its greetin
 `bot/greeting.md`. Change the flow in `SKILL.md`; change only the bot's own parts in
 `bot/instructions.md`, and keep the shared sections free of tool names.
 
-**Gemini gets its own skill zip** because Gemini skills cannot run `.py` files. The build carries
-the scanner as `scanner/*.md`: one Python block per module or rule file that saves it into the
-sandbox, and a scan block in `run.md` that refuses to run unless every part matches its SHA-256.
-The one SKILL.md paragraph that differs sits between `<!-- variant:run-code -->` markers and is
-replaced from `gemini/run-code.md`. A test runs the blocks as Gemini would and compares the
-output with the package scanner's, so a module change that the blocks miss fails the build.
+**Gemini gets its own skill zip** because Gemini skills cannot run code at all. Carrying the
+scanner as Markdown blocks for Gemini to save and run was tried and dropped: Gemini never ran
+them. The Gemini zip is `SKILL.md` with the paragraph between the `<!-- variant:run-code -->`
+markers removed, plus `references/` and `rules/`; Gemini takes the no-code path and reads every
+file by eye. A test checks the pack holds no code and that its SKILL.md differs from the source
+only by that paragraph.
 
 The origin and the session-facing materials stay in the private `ace-1` repo
 (`output/ace/2026.10/October_Build/`). This repo never carries session logistics, speaker names,

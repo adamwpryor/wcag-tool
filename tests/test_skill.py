@@ -3,7 +3,6 @@
 import csv
 import hashlib
 import io
-import re
 import subprocess
 import sys
 import zipfile
@@ -75,7 +74,7 @@ def test_generated_reference_pages_are_current() -> None:
 def test_selftest_matches_the_expected_results() -> None:
     result = _run(SCRIPTS / "selftest.py")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "8 of 8 match" in result.stdout
+    assert "9 of 9 match" in result.stdout
 
 
 def test_scan_script_is_read_only(tmp_path: Path) -> None:
@@ -184,13 +183,12 @@ def test_skill_reads_for_meaning_after_any_scan() -> None:
     skill_text = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
     scanning = " ".join(build_skill._section(skill_text, "Scanning, where you can").split())
     assert "never replaces *Reading every page*" in scanning
+    assert "scripts/scan.py --json" in skill_text, "the scan path asks for data with locators"
     gemini = dict(build_skill.gemini_files(ROOT / "skill"))["SKILL.md"].decode("utf-8")
-    # Each scan path asks for the data, whose findings carry a locator; the table has none.
-    for text, flag in ((skill_text, "scripts/scan.py --json"), (gemini, "`JSON = True`")):
+    for text in (skill_text, gemini):
         reading = build_skill._section(text, "Reading every page")
-        for criterion in ("1.4.1", "1.3.3", "2.4.4", "1.4.5"):
+        for criterion in ("1.4.1", "1.3.3", "2.4.4", "1.4.5", "4.1.2"):
             assert criterion in reading, criterion
-        assert flag in text, flag
 
 
 @pytest.mark.parametrize(
@@ -270,74 +268,20 @@ def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
     assert prefix + "scripts/wcag_tool/cli.py" not in names
 
 
-_PYTHON_BLOCK = re.compile(r"```python\n(.*?)```\n", re.DOTALL)
-
-
-def _gemini_blocks() -> tuple[list[str], str]:
-    """The scanner's save blocks and its scan block, as the Gemini pack carries them."""
-    pages = {
-        name: data.decode("utf-8")
-        for name, data in build_skill.gemini_files(ROOT / "skill")
-        if name.startswith("scanner/")
-    }
-    run = _PYTHON_BLOCK.findall(pages.pop("scanner/run.md"))
-    saves = [block for page in pages.values() for block in _PYTHON_BLOCK.findall(page)]
-    assert len(run) == 1 and len(saves) == len(pages)
-    return saves, run[0]
-
-
-def test_gemini_blocks_scan_like_the_package_and_refuse_a_bad_copy(tmp_path: Path) -> None:
-    from wcag_tool import engine
-    from wcag_tool.report import render_markdown
-
-    work, scripts = tmp_path / "sandbox", tmp_path / "scripts"
-    scripts.mkdir()
-    paths = make_demo_set(work)
-    before = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
-    saves, run = _gemini_blocks()
-    # One code step, as run.md asks: every save block, then the scan block.
-    step = scripts / "step.py"
-    step.write_text("\n".join([*saves, run]), encoding="utf-8")
-    result = subprocess.run(
-        [sys.executable, "-I", str(step)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        cwd=work,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == render_markdown(engine.scan_many(engine.iter_supported(work))) + "\n"
-    assert {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
-
-    # A later step that finds one part altered refuses to scan, and names the part.
-    altered = work / "wcag_tool" / "alt.py"
-    altered.write_text(altered.read_text(encoding="utf-8") + "# edited\n", encoding="utf-8")
-    again = scripts / "again.py"
-    again.write_text(run, encoding="utf-8")
-    result = subprocess.run(
-        [sys.executable, "-I", str(again)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        cwd=work,
-        check=False,
-    )
-    assert result.returncode != 0
-    assert "wcag_tool/alt.py" in result.stderr and "| File |" not in result.stdout
-
-
-def test_gemini_pack_carries_the_scanner_as_markdown_only() -> None:
+def test_gemini_pack_is_prose_and_rules_only() -> None:
+    # Gemini skills cannot run code, so the pack carries no scanner and no run-code path.
     files = dict(build_skill.gemini_files(ROOT / "skill"))
     assert not [n for n in files if n.endswith((".py", ".sh"))]
-    assert not [n for n in files if n.startswith(("scripts/", "tests/")) or n == "TESTING.md"]
-    for wanted in ("references/criteria.md", "rules/wcag21.json", "scanner/run.md"):
+    assert not [n for n in files if n.startswith(("scripts/", "tests/", "scanner/"))]
+    assert "TESTING.md" not in files
+    for wanted in ("references/criteria.md", "rules/checks.json", "rules/wcag21.json"):
         assert wanted in files, wanted
     skill = files["SKILL.md"].decode("utf-8")
-    assert "scanner/run.md" in skill
     assert "scripts/" not in skill and "variant:" not in skill
+    assert "but you can run code" not in skill
+    assert "If no tool is connected and you cannot run code" in skill
     # Everything outside the marked paragraph is SKILL.md word for word.
     source = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
-    assert build_skill._section(source, "The three rules you never break") in skill
-    assert build_skill._section(source, "If asked for something outside this") in skill
-    assert source.split("<!-- variant:")[0] in skill
+    before, rest = source.split("<!-- variant:", 1)
+    after = rest.split("<!-- /variant:", 1)[1].split("\n", 1)[1]
+    assert skill == before + after
