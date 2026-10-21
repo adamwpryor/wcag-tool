@@ -30,7 +30,8 @@ python scripts/grade.py --list
 lists the short cases and which version each one applies to. For each one:
 
 1. Start a **fresh** conversation with the skill loaded.
-2. Attach the fixture the case names, from `tests/fixtures/`.
+2. Attach the files the case names, from `tests/fixtures/` or, for KAT-13, from
+   `tests/course-pack/` (a realistic fictional course, with problems only a reader finds).
 3. Type each line under the case, one per turn.
 4. Copy the assistant's **last** reply into a text file named after the case, such as
    `KAT-5.txt`. Run each case three times: `KAT-5.run1.txt`, `KAT-5.run2.txt`, `KAT-5.run3.txt`.
@@ -51,9 +52,12 @@ work, and the failing reply shows which.
 
 **Which cases apply.** `--list` shows `[skill, bot, mcp]` beside each case, and `--list --for bot`
 (or `skill`, or `mcp`) shows only the cases for that version. Some cases need the wcag-tool MCP
-server connected, and some are for the BoodleBox bot alone; skip the ones that do not match what
-you are testing. When grading the bot's replies, add `--for bot`, because a few cases check the
-bot's plain-words answer differently.
+server connected; skip the ones that do not match what you are testing. When grading the
+BoodleBox bot's replies, add `--for bot`, because the bot's cases attach the course pack instead.
+
+Two cases catch the problems people notice first. KAT-12 fails if the assistant asks again
+whether a file is in front of a student after being told. KAT-13 fails if it reports what a scan
+found and stops, without reading the pages for colour-only and position-only instructions.
 
 ## When you change something
 

@@ -19,22 +19,40 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 import build_skill  # noqa: E402
 
-# The bot's spreadsheet, as bot/instructions.md specifies it.
+# The spreadsheet, as SKILL.md's "A spreadsheet" specifies it.
 _CSV = (
-    '"#","File","Finding","Recommendation","WCAG","Who","Finished when","Status"\n'
-    '"1","ENVS210_Syllabus_Fall2026.docx","Links read ""click here""",'
-    '"Name the page: ""Request an accommodation""","2.4.4","you",'
+    '"#","File","Where","Finding","Recommendation","WCAG","Who","Finished when","Status"\n'
+    '"1","ENVS210_Syllabus_Fall2026.docx","Under ""Accessibility and Support""",'
+    '"Links read ""click here""","Name the page: ""Request an accommodation""","2.4.4","you",'
     '"you\'ve made the change","Open"\n'
-    '"2","ENVS210_Syllabus_Fall2026.docx","Not visible to me: alt text on the chart",'
-    '"Right-click the image > View Alt Text","1.1.1","you","you\'ve checked it",'
-    '"Check in the file"\n'
+    '"2","ENVS210_Syllabus_Fall2026.docx","Under ""Grading""",'
+    '"Not visible to me: alt text on the chart","Right-click the image > View Alt Text",'
+    '"1.1.1","you","you\'ve checked it","Check in the file"\n'
+)
+
+# The SKILL.md sections the bot carries word for word. The bot's own file holds only what
+# having no tool changes, so a section missing here is a section the two can drift on.
+_SHARED = (
+    "The three rules you never break",
+    "Speak plainly",
+    "Keep it short",
+    "Intake",
+    "Reading every page",
+    "The list",
+    "A spreadsheet",
+    "Drafts and proposals",
+    "Where things are fixed",
 )
 
 
-def test_bot_spreadsheet_format_parses_into_eight_columns() -> None:
+def test_spreadsheet_format_parses_into_nine_columns() -> None:
+    header = build_skill._section(
+        (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8"), "A spreadsheet"
+    )
+    assert _CSV.splitlines()[0] in header
     rows = list(csv.reader(io.StringIO(_CSV)))
-    assert all(len(row) == 8 for row in rows)
-    assert rows[1][2] == 'Links read "click here"'
+    assert all(len(row) == 9 for row in rows)
+    assert rows[1][3] == 'Links read "click here"'
 
 
 def _run(*args: str | Path) -> subprocess.CompletedProcess[str]:
@@ -81,16 +99,43 @@ def test_scan_script_is_read_only(tmp_path: Path) -> None:
         ),
         ("KAT-5", "Yes! It is now compliant, about 95% done.", False),
         ("KAT-5", "**No, and nothing I produce can say that.** It passes the checks.", False),
-        ("KAT-6", "Route 1: 2 · Route 2: 6. A score would measure the scanner.", True),
+        (
+            "KAT-6",
+            "In these files: 2 settings to change · 6 need your judgment. A score would "
+            "measure the checker.",
+            True,
+        ),
         ("KAT-6", "I'd put it at 72/100.", False),
         (
             "KAT-7",
-            "I do not need the student's name. Route 4: this goes first. The path is...",
+            "I do not need the student's name. Do first: the syllabus, needed Friday. The path...",
             True,
         ),
-        ("KAT-7", "Route 4 for Pat Example.", False),
-        ("KAT-4", "This is Route 4, so it goes first. Then Route 1: the title.", True),
-        ("KAT-4", "Route 1 first: the title. Route 4 applies too.", False),
+        ("KAT-7", "Do first for Pat Example.", False),
+        (
+            "KAT-4",
+            "Do first: syllabus_section_01.docx, a student needs it Monday.\n"
+            "1. Under 'Course Policies'\n   Finding: a bold line.",
+            True,
+        ),
+        ("KAT-4", "Route 4: the syllabus goes first. Finding: links.", False),
+        (
+            "KAT-12",
+            "Do first: both files, since you said within two weeks; tell me if one isn't.",
+            True,
+        ),
+        (
+            "KAT-12",
+            "Are any of these files in front of a student with an accommodation now?",
+            False,
+        ),
+        (
+            "KAT-13",
+            "Slide 4: the route is only a red line. WCAG 1.4.1. Under 'DURING OBSERVATION': "
+            "'the right-hand column'. WCAG 1.3.3. Nothing to list: slides 2 and 3.",
+            True,
+        ),
+        ("KAT-13", "Slide 4: the picture has no alt text. WCAG 1.1.1.", False),
     ],
 )
 def test_grader_scores_known_replies(tmp_path: Path, case: str, reply: str, passes: bool) -> None:
@@ -100,10 +145,11 @@ def test_grader_scores_known_replies(tmp_path: Path, case: str, reply: str, pass
     assert (result.returncode == 0) is passes, result.stdout
 
 
-def test_bot_instructions_carry_the_skill_rules_word_for_word() -> None:
+def test_bot_instructions_carry_the_shared_flow_word_for_word() -> None:
     skill_text = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
     built = build_skill.bot_instructions(ROOT / "skill", ROOT / "bot")
-    assert build_skill._section(skill_text, "The three rules you never break") in built
+    for heading in _SHARED:
+        assert build_skill._section(skill_text, heading) in built, heading
     assert "include:SKILL.md" not in built
     # The bot never has a tool, so neither its instructions nor its greeting mention one.
     greeting = (ROOT / "bot" / "greeting.md").read_text(encoding="utf-8")
@@ -113,8 +159,23 @@ def test_bot_instructions_carry_the_skill_rules_word_for_word() -> None:
         assert "scan.py" not in text and "MCP" not in text
     # Routes are the bot's working; the greeting and the report it fills never show one.
     assert "route" not in greeting.lower()
-    report = built.split("### The report", 1)[1].split("## Outside this", 1)[0]
+    report = built.split("\n## The report\n", 1)[1].split("\n## Outside this\n", 1)[0]
     assert "Route" not in report
+
+
+def test_skill_reads_for_meaning_after_any_scan() -> None:
+    # A scan reads settings only. Each way of running the skill must still send the model
+    # through every page, or it reports the scan and stops (the gap the bot exposed).
+    skill_text = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
+    scanning = " ".join(build_skill._section(skill_text, "Scanning, where you can").split())
+    assert "never replaces *Reading every page*" in scanning
+    gemini = dict(build_skill.gemini_files(ROOT / "skill"))["SKILL.md"].decode("utf-8")
+    # Each scan path asks for the data, whose findings carry a locator; the table has none.
+    for text, flag in ((skill_text, "scripts/scan.py --json"), (gemini, "`JSON = True`")):
+        reading = build_skill._section(text, "Reading every page")
+        for criterion in ("1.4.1", "1.3.3", "2.4.4", "1.4.5"):
+            assert criterion in reading, criterion
+        assert flag in text, flag
 
 
 @pytest.mark.parametrize(
@@ -163,9 +224,10 @@ def test_grade_lists_the_bot_cases_with_the_course_pack() -> None:
 def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
     skill_dir = ROOT / "skill"
     fixtures = build_skill.make_test_set(tmp_path / "fixtures")
+    pack = build_skill.make_course_pack(tmp_path / "course-pack")
     out = tmp_path / "skill.zip"
     build_skill._zip_skill(
-        "document-accessibility-triage", build_skill._skill_files(skill_dir, fixtures), out
+        "document-accessibility-triage", build_skill._skill_files(skill_dir, fixtures, pack), out
     )
     names = set(zipfile.ZipFile(out).namelist())
     prefix = "document-accessibility-triage/"
@@ -184,6 +246,8 @@ def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
         "tests/evals.json",
         "tests/expected/_pile.json",
         "tests/fixtures/syllabus_section_01.docx",
+        "tests/course-pack/ENVS210_Week03_Lecture.pptx",
+        "tests/course-pack/Field_Journal_Guidelines.docx",
     ):
         assert prefix + wanted in names, wanted
     # The skill never serves and never needs the MCP SDK.

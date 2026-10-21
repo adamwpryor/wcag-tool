@@ -15,17 +15,17 @@ The rules live as data in ``src/wcag_tool/rules/``. The skill's prose lives in
    * ``dist/<slug>-skill.zip`` -- the skill folder: ``SKILL.md``,
      ``references/``, ``rules/`` (the JSON), ``scripts/`` (a read-only scanner,
      the self-test and the grader, with the checks vendored from the package),
-     and ``tests/`` (fictional fixture files, their expected results, and the
-     conversation evals). Fixed timestamps, so an unchanged source produces a
-     byte-identical archive.
+     and ``tests/`` (fictional fixture files, their expected results, the
+     conversation evals, and the realistic course pack some evals attach).
+     Fixed timestamps, so an unchanged source produces a byte-identical archive.
    * ``dist/<slug>-gemini.zip`` -- the same skill for Gemini, which cannot run the
      files a skill carries: ``SKILL.md`` with its run-code paragraph taken from
      ``gemini/``, ``references/``, ``rules/``, and ``scanner/``, Markdown whose
      Python blocks save the scanner into the code sandbox and then scan, refusing
      if any part was not copied exactly. No ``scripts/`` and no test kit.
    * ``dist/<slug>-bot/`` -- the BoodleBox pack: ``instructions.md`` for the
-     instruction field, built from ``bot/instructions.md`` with the never-break
-     rules spliced in from SKILL.md; ``greeting.md`` for the greeting field;
+     instruction field, built from ``bot/instructions.md`` with the rules and the
+     shared session flow spliced in from SKILL.md; ``greeting.md`` for the greeting field;
      ``knowledge/`` to attach; and
      ``test-files/``, a realistic fictional course pack for testing it by hand.
      No scripts; the bot runs none.
@@ -192,7 +192,9 @@ def _combined(skill_dir: Path) -> str:
     return "\n".join(parts)
 
 
-def _skill_files(skill_dir: Path, fixtures: list[Path]) -> list[tuple[str, bytes]]:
+def _skill_files(
+    skill_dir: Path, fixtures: list[Path], course_pack: list[Path] | None = None
+) -> list[tuple[str, bytes]]:
     """Every (archive path, bytes) pair in the skill zip, relative to the skill folder."""
     out: list[tuple[str, bytes]] = [
         (name, (skill_dir / name).read_bytes())
@@ -210,11 +212,14 @@ def _skill_files(skill_dir: Path, fixtures: list[Path]) -> list[tuple[str, bytes
         out.append((f"scripts/wcag_tool/{name}", (package / name).read_bytes()))
     for path in sorted(_rules_dir().glob("*.json")):
         out.append((f"scripts/wcag_tool/rules/{path.name}", path.read_bytes()))
-    for path in fixtures:
-        data = path.read_bytes()
-        if path.suffix in (".docx", ".pptx"):
-            data = _stable_office(data)
-        out.append((f"tests/fixtures/{path.name}", data))
+    # The course pack sits beside the fixtures, not among them: the self-test scans every
+    # fixture against tests/expected/, and the pack is for the conversation evals alone.
+    for folder, paths in (("fixtures", fixtures), ("course-pack", course_pack or [])):
+        for path in paths:
+            data = path.read_bytes()
+            if path.suffix in (".docx", ".pptx"):
+                data = _stable_office(data)
+            out.append((f"tests/{folder}/{path.name}", data))
     return out
 
 
@@ -253,12 +258,12 @@ def _section(markdown: str, heading: str) -> str:
 
 
 def bot_instructions(skill_dir: Path, bot_dir: Path) -> str:
-    """The bot's instruction text: its own session flow, with SKILL.md's rules spliced in.
+    """The bot's instruction text: SKILL.md's rules and session flow, around the bot's own parts.
 
-    The bot never has a tool, so its session flow is written for that alone in
-    ``bot/instructions.md``. The rules it must never break are not rewritten there:
-    each ``<!-- include:SKILL.md#<heading> -->`` line is replaced by that section of
-    SKILL.md word for word, so the skill and the bot cannot drift apart on them.
+    The bot never has a tool, so ``bot/instructions.md`` holds only what that changes:
+    its opening, its report and its out-of-scope answers. Everything it shares with the
+    skill is not rewritten there: each ``<!-- include:SKILL.md#<heading> -->`` line is
+    replaced by that section of SKILL.md word for word, so the two cannot drift apart.
 
     Args:
         skill_dir: The folder holding SKILL.md.
@@ -495,8 +500,9 @@ def build(slug: str) -> list[Path]:
     name = _skill_name((skill_dir / "SKILL.md").read_text(encoding="utf-8"))
     archive = dist / f"{slug}-skill.zip"
     with tempfile.TemporaryDirectory() as tmp:
-        fixtures = make_test_set(Path(tmp))
-        _zip_skill(name, _skill_files(skill_dir, fixtures), archive)
+        fixtures = make_test_set(Path(tmp) / "fixtures")
+        pack = make_course_pack(Path(tmp) / "course-pack")
+        _zip_skill(name, _skill_files(skill_dir, fixtures, pack), archive)
     written.append(archive)
 
     gemini_zip = dist / f"{slug}-gemini.zip"

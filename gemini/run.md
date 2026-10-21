@@ -8,8 +8,9 @@ end of this page checks those parts and scans.
 1. In one code step, run the block from every file listed under *The parts*, exactly as written,
    then the block under *Scan*. Do not shorten, reformat or correct anything in them. The scan
    block compares each saved part with its fingerprint and refuses to run if any part differs.
-2. Set `FILES` to the course files as your sandbox sees them. Left empty, it scans every Word,
-   PowerPoint and PDF file under the working folder.
+2. Set `FILES` to the course files as your sandbox sees them, and `JSON = True` so each finding
+   carries where it is. Left empty, `FILES` scans every Word, PowerPoint and PDF file under the
+   working folder.
 3. If your sandbox keeps files between steps, a later scan needs only the *Scan* block. If it
    names a part as missing, run that part again.
 

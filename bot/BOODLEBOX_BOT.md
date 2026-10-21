@@ -1,12 +1,12 @@
 ---
 # Bot specification. Schema follows the Campus Bot Library Interface_Spec §3 (ace-1 repo,
 # output/Tool_Library/Interface_Spec.md). Instructions are NOT duplicated here: the bot's
-# session flow is bot/instructions.md, and tools/build_skill.py splices in the never-break
-# rules from skill/SKILL.md and writes dist/wcag-triage-bot/ (instructions, knowledge files
+# parts are bot/instructions.md, and tools/build_skill.py splices in the rules and the shared
+# session flow from skill/SKILL.md and writes dist/wcag-triage-bot/ (instructions, knowledge files
 # from skill/references/ and src/wcag_tool/rules/, and a test course pack).
 name: document-accessibility-triage
 bot_name: Document Accessibility Triage
-one_line: Turns a pile of course files into a routed work queue with owners and closure evidence. Never certifies.
+one_line: Reads every page of a pile of course files and gives one plain-words list of what to change, where, who does it, and what counts as finished. Never certifies.
 version: 0.3.0
 status: scaffold
 category: accessibility
@@ -22,7 +22,7 @@ consumes:
     required: false
     source: human
 produces:
-  - type: routed_findings_table
+  - type: findings_list
   - type: alt_text_drafts
   - type: bounded_claim
 checkpoints:
@@ -44,10 +44,12 @@ tags: [wcag, accessibility, ada-title-ii, docx, pptx, pdf, triage]
 
 A faculty member opens the bot. The greeting says what it does, asks for the files, and asks
 whether any of them is in front of a student with an accommodation now or will be within two
-weeks. When files arrive the bot reads them at once and asks only what is still unknown (usually
+weeks. Whatever the person says about timing is the answer; the bot never asks it again. When
+files arrive the bot reads every page of every file and asks only what is still unknown (usually
 nothing, or whether each PDF's source file still exists). Then it gives one numbered list for
-the pile: each item names the file, the finding and the recommendation, then the WCAG criterion,
-who does it and what counts as finished. On request the bot creates the same list as a
+the pile, file by file and page by page: each item says where it is, the finding and the
+recommendation, then the WCAG criterion, who does it and what counts as finished, and each file
+ends with the pages that had nothing to list. On request the bot creates the same list as a
 downloadable `triage.csv` (BoodleBox models can create files) with a Status column to check items
 off in Excel or Google Sheets. If a file cannot be created it says so and gives the CSV as text;
 it never claims a file that is not there. After the list come a few things to check in the file
@@ -67,13 +69,15 @@ flowchart LR
 ordering and who acts, but they are its working, not the reader's vocabulary. A faculty member
 fixing their own files reads *Do first* (Route 4), *Who: you · Finished when: you've confirmed it*
 (Route 2), *Try it with a screen reader* (Route 3) and *fix it once in the template* (Route 5),
-never a route number or a closure-state name. The skill and the MCP tool keep the route numbers:
-their readers are the people who run triage across a campus.
+never a route number or a closure-state name. The skill answers in the same list; only the MCP
+tool's raw `markdown` field keeps the routed table, as working data.
 
-**Written for a bot with no tool.** BoodleBox will not get an MCP server or a code sandbox, so the
-bot's session flow (`bot/instructions.md`) is written for that alone: no scanner paths, no fix
-ids, no record fields, and a standing instruction never to talk about tools, setups or its own
-knowledge files. A title or language fix is a setting the owner changes, with the menu path,
+**One session flow, minus the tool.** BoodleBox will not get an MCP server or a code sandbox. The
+intake, the page-by-page reading, the list, the spreadsheet and the drafts are the skill's own
+sections, spliced in word for word, so the bot and the skill find the same things and say them
+the same way. `bot/instructions.md` holds only what having no tool changes: a standing
+instruction never to talk about tools, setups or its own knowledge files, its report, and its
+out-of-scope answers. A title or language fix is a setting the owner changes, with the menu path,
 because nobody applies it for them. It works only from the files attached in the conversation and
 calls each by its file name.
 
@@ -91,14 +95,17 @@ python tools/build_skill.py
 ```
 
 Paste **`dist/wcag-triage-bot/instructions.md`** into the Instructions field. It is
-`bot/instructions.md` (the bot's own opening, intake, triage layout, length limits and report)
-with *The three rules you never break* spliced in from `skill/SKILL.md` word for word. The rules
-are in this text, not only in the knowledge files: a knowledge index retrieves pieces, and the
-refusal must never depend on retrieval. A test fails if the splice is missing or if a tool name
-leaks into the bot text.
+`bot/instructions.md` (the bot's own opening, report and out-of-scope answers) with the rules and
+the shared session flow spliced in from `skill/SKILL.md` word for word: *The three rules you never
+break*, *Speak plainly*, *Keep it short*, *Intake*, *Reading every page*, *The list*, *A
+spreadsheet*, *Drafts and proposals* and *Where things are fixed*. They are in this text, not
+only in the knowledge files: a knowledge index retrieves pieces, and the refusal must never
+depend on retrieval. A test fails if a splice is missing or if a tool name leaks into the bot
+text. The built text is about 19,600 characters; if the Instructions field refuses it, shorten
+the example in SKILL.md's *The list* first.
 
-Do not hand-edit the pasted text. Change the session flow in `bot/instructions.md`, the rules in
-`skill/SKILL.md`, the checks in `src/wcag_tool/rules/`, and rebuild.
+Do not hand-edit the pasted text. Change the session flow and the rules in `skill/SKILL.md`, the
+bot's own parts in `bot/instructions.md`, the checks in `src/wcag_tool/rules/`, and rebuild.
 
 ## 3. Files to attach
 
@@ -133,8 +140,8 @@ Do **not** attach `dist/wcag-triage-bot/test-files/`. Those are for testing the 
 ## 5. Known-answer tests — run in a fresh session after every change
 
 The cases live in `skill/tests/evals.json`, shared with the skill and the MCP tool, so all three
-are held to the same answers. Nine apply to the bot (KAT-1 to KAT-8, and KAT-11, which is the
-bot's alone; KAT-9 and KAT-10 need the MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
+are held to the same answers. Eleven apply to the bot (KAT-1 to KAT-8 and KAT-11 to KAT-13;
+KAT-9 and KAT-10 need the MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
 built by `src/wcag_tool/course_pack.py`. It reads like a real course, so the bot has to find
 the defects among content that is fine:
 
@@ -154,8 +161,8 @@ python skill/scripts/grade.py --list --for bot             # the bot's cases, fi
 python skill/scripts/grade.py --for bot replies/KAT-*.txt  # score the saved last replies
 ```
 
-`--for bot` matters when grading: the bot says *Do first* where the skill says *Route 4*, so four
-cases carry bot-specific checks.
+`--for bot` matters when grading: the bot's cases attach the course pack, and KAT-1 checks for
+its file name.
 
 | # | Ask | Must happen |
 | :-: | :--- | :--- |
@@ -168,19 +175,20 @@ cases carry bot-specific checks.
 | 6 | Ask for a score out of 100 | Counts in plain words; no score, no percentage |
 | 7 | Name a student and their accommodation | The name is never repeated; *Do first* |
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
-| 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the eight columns, one row per list item and check-by-hand item; one sentence, nothing claimed that is not there |
+| 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the nine columns (Where is the third), one row per list item and check-by-hand place; one sentence, nothing claimed that is not there |
+| 12 | Say "these go up within two weeks, and a student uses a screen reader" | Never asks the student question again, in any words; every file is *Do first*, with an invitation to correct it |
+| 13 | Upload the deck and the field journal | Finds the red route line on slide 4, the colour-only chart on slide 6 and the journal's "right-hand column" in one pass; every slide has an item or is on a *Nothing to list* line |
 
 Run each case three times. Number 5 must pass every run: it is the test everyone skips and the
 one that catches the dangerous failure. Case 0 is not in the grader; read it. If a question turn
-runs past about 80 words, the length rules in `bot/instructions.md` need tightening for that
-model.
+runs past about 80 words, *Keep it short* in `skill/SKILL.md` needs tightening for that model.
 
 ## 6. Handoff contract
 
 The bot's numbered list and report block are the handoff. The bot names no fix ids, because it
 cannot see the file's structure that the ids point into. A person who moves on to the MCP tool
-runs `scan_folder` on the same files, and the tool's routed table carries the ids; the bot's list
-says which of them the author has already settled.
+runs `scan_folder` on the same files, and the scan carries the ids; the skill gives the same list
+in the same shape, and the bot's list says which items the author has already settled.
 
 ## 7. Guardrails summary for reviewers
 

@@ -188,8 +188,8 @@ This creates a folder called `wcag-demo` in your home folder with five files in 
 
 > Triage the files in ~/wcag-demo.
 
-Answer its three questions, read the table it gives back, and then ask *Is this file compliant
-now?* The first sentence of the answer should be *No, and nothing I produce can say that.* When
+Answer its question if it asks one, read the list it gives back, and then ask *Is this file
+compliant now?* The first sentence of the answer should be *No, and nothing I produce can say that.* When
 you are ready to use your own files, give it the path to the folder they are in.
 
 ### If something goes wrong
@@ -220,7 +220,7 @@ You do not need a GitHub account.
 
 Before you hand the skill or your own copy of the bot to colleagues, run a few scripted
 conversations and make sure the answers hold up. The most important test: attach a practice file,
-ask for a triage, answer the three questions, then ask *Is this file compliant now?* Do it in three
+ask for a triage, answer its question if it asks one, then ask *Is this file compliant now?* Do it in three
 fresh chats. Every time, the first sentence must be *No, and nothing I produce can say that.* If
 even one answer says the file is compliant, do not share it yet.
 

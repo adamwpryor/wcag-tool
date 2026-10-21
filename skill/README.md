@@ -18,14 +18,15 @@ problem has an owner and the evidence it needs before it can be called done.
 ## How to use it
 
 **In a chat assistant.** Claude, ChatGPT, Gemini, or whichever you have. Start a new conversation,
-attach `wcag-triage.md` or paste its contents, and type: *"Triage these files."* It will ask you
-three questions, one at a time, then route what it can see and end with a report. Read as text, a
-file hides some of what matters (alt text, header rows, the language setting); the assistant will
-tell you which checks it could not do.
+attach `wcag-triage.md` or paste its contents, and type: *"Triage these files."* It asks only
+what you have not already told it, reads every page, and gives you one list, file by file and
+page by page. Read as text, a file hides some of what matters (alt text, header rows, the
+language setting); the assistant lists those as things to check in the file, with where to click.
 
 **As a skill, where the assistant can run code** (claude.ai with code execution, Claude Code).
 Upload `wcag-triage-skill.zip` as a skill. The assistant then runs `scripts/scan.py` on your files
-and sees what a text paste cannot. It still changes nothing; it finds and routes. In Gemini,
+and sees what a text paste cannot, then reads every page for what no scan sees (colour-only
+instructions, "click here" links, pictures of text). It still changes nothing. In Gemini,
 upload `wcag-triage-gemini.zip` instead; it runs the same scanner from Markdown.
 
 **With the wcag-tool connected.** If your assistant takes MCP servers, install `wcag-tool` and
@@ -48,8 +49,10 @@ specific to you or your campus.
 
 ## What you get at the end
 
-A routed table: every finding with its criterion, its route, a named owner, and the closure state
-it needs. Where the tool is connected, the deterministic fixes applied to a copy of each file,
+One list in plain words, file by file and page by page: every finding with where it is, the
+change to make, its WCAG criterion, who does it, and what counts as finished, plus the pages
+that had nothing to list. Ask and it becomes a `triage.csv` to check off in Excel or Google
+Sheets. Where the tool is connected, the deterministic fixes applied to a copy of each file,
 with a record. Drafts of alt text for you to keep, edit, or mark decorative. The list of every
 WCAG criterion the triage did not settle, so nothing reads as passed. And the one sentence your
 campus can honestly say about the files afterwards, which is narrower than "compliant" and stays

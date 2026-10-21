@@ -17,8 +17,10 @@ from wcag_tool.findings import ROUTES_SUMMARY
 
 INSTRUCTIONS = (
     "Accessibility triage for course documents (DOCX, PPTX, PDF). scan_document returns "
-    "routed findings for one file; scan_folder does a pile and adds Route 5 candidates and a "
-    "ready-made routed table; fix_document repairs only what is deterministic unless a person "
+    "routed findings for one file, each with its locator; scan_folder does a pile and adds "
+    "Route 5 candidates. A scan reads settings, not meaning: read every page too, and answer "
+    "in the triage skill's plain-words list, not the routed table, which is working data. "
+    "fix_document repairs only what is deterministic unless a person "
     "names a specific fix; describe_routes explains the five routes; explain_criterion quotes "
     "W3C's text for one WCAG criterion and says what the tool can and cannot judge about it. "
     "Never describe a clean report as conformance. Alt text is always a proposal for a person "
@@ -92,8 +94,9 @@ def scan_folder(path: str, recursive: bool = True) -> dict[str, Any]:
     Adds what a single scan cannot see: Route 5 candidates, meaning checks that
     recur across enough files to be fixed once at the template or the export
     setting instead of in every copy. The result includes a `markdown` field
-    holding the routed table in the shape the triage skill asks for, with the
-    owner column left blank for a person's name.
+    holding the routed table: working data, not the reply. The triage skill
+    answers in a plain-words list, page by page, placing each finding by its
+    `locator`.
 
     Args:
         path: Folder on this machine.

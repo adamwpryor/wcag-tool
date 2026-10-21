@@ -21,13 +21,16 @@ instructions, and the reference pages must say the same thing. If a route or a c
 changes, change `skill/references/routes.md`, `src/wcag_tool/findings.py`, `rules.py` and the
 schemas in the same commit. Never hand-edit a `<!-- generated -->` block or `criteria.md`.
 
-**The bot is the one exception to a shared session flow.** BoodleBox never gets an MCP server or
-a code sandbox, so `bot/instructions.md` is written for a bot with no tool: its own intake,
-a numbered list instead of the routed table, routes translated into plain words (*Do first*,
-never "Route 4"), length limits, and no tool names. Its opening is `bot/greeting.md`. The never-break rules are
-not rewritten there: an `<!-- include:SKILL.md#... -->` line splices them in word for word at
-build time, and a test fails if the splice is missing or a tool name leaks in. Change the rules
-in `SKILL.md`; change how the bot talks in `bot/instructions.md`.
+**The skill and the bot share one session flow.** Both answer in the same plain-words list
+(*Do first*, never "Route 4"), file by file and page by page, after reading every page for what
+no scan sees (`SKILL.md` *Reading every page*). The scanner's routed table is working data,
+never the reply. BoodleBox never gets an MCP server or a code sandbox, so `bot/instructions.md`
+holds only what having no tool changes: its opening, its report, its out-of-scope answers, and
+no tool names. Everything else is an `<!-- include:SKILL.md#... -->` line spliced in word for
+word at build time (rules, voice, intake, reading, list, spreadsheet, drafts, where things are
+fixed); a test fails if a splice is missing or a tool name leaks in. Its greeting is
+`bot/greeting.md`. Change the flow in `SKILL.md`; change only the bot's own parts in
+`bot/instructions.md`, and keep the shared sections free of tool names.
 
 **Gemini gets its own skill zip** because Gemini skills cannot run `.py` files. The build carries
 the scanner as `scanner/*.md`: one Python block per module or rule file that saves it into the

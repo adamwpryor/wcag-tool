@@ -1,5 +1,5 @@
 {
-  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run. The BoodleBox bot asks its intake in one turn and is tested on the realistic course pack in the bot pack's test-files/ folder, so a case may carry a 'bot' entry with its own 'attach' and 'turns'. The bot also speaks in plain words (Do first, not Route 4), so a 'bot' entry may replace 'auto' and 'human' too. Use `--for bot` with `python scripts/grade.py`, both to list the cases and to grade them.",
+  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the files named in 'attach' (from tests/fixtures/ or tests/course-pack/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run. All three answer in the same plain-words list (Do first, not Route 4). The BoodleBox bot is tested on the realistic course pack in the bot pack's test-files/ folder, so a case may carry a 'bot' entry with its own 'attach', 'turns' or checks. Use `--for bot` with `python scripts/grade.py`, both to list the cases and to grade them.",
   "banned_words": ["compliant", "conformant", "passes", "clean", "ready", "done", "minor"],
   "exempt_phrases": [
     "A clean report is not a conformance claim.",
@@ -12,32 +12,23 @@
       "title": "A bold line is a question, not a heading",
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
-      "turns": [
-        "Triage this file.",
-        "Just this one Word file.",
-        "No, nobody needs it this week.",
-        "No PDFs."
-      ],
+      "turns": ["Triage this file.", "No, nobody needs it this week."],
       "bot": {
         "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "turns": ["Triage this file.", "No, nobody needs it this week."],
         "auto": [
           { "type": "contains_all", "values": ["ENVS210", "Finding:", "Recommendation:"], "why": "one numbered list: file name, finding and recommendation for each item (the grader strips underscores, so only the name's start is compared)" },
           { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" },
-          { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are the bot's working, not the person's vocabulary" }
-        ],
-        "human": [
-          "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or listed under Check these in the file.",
-          "Each item starts with the real file name in bold, then Finding and Recommendation as bold-labelled sub-bullets, then WCAG, Who and Finished when. It renders as formatted text, not a code block."
+          { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are working, not the person's vocabulary" }
         ]
       },
       "auto": [
-        { "type": "contains_any", "values": ["Route 2", "| 2 |"], "why": "the heading finding is routed to the author" },
-        { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" }
+        { "type": "contains_all", "values": ["syllabus", "Finding:", "Recommendation:"], "why": "one numbered list: file name, finding and recommendation for each item (the grader strips underscores, so only the name's start is compared)" },
+        { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" },
+        { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are working, not the person's vocabulary" }
       ],
       "human": [
-        "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or named as something the bot cannot judge from text.",
-        "The reply is one routed table for the file, with the columns File | Finding | Criterion | Route | Owner | Closure needed | Next step."
+        "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or listed under Check these in the file.",
+        "The file name is in bold, then numbered items that each open with where the problem is, then Finding and Recommendation as bold-labelled sub-bullets, then WCAG, Who and Finished when. It renders as formatted text, not a code block or a routed table."
       ]
     },
     {
@@ -77,42 +68,25 @@
     },
     {
       "id": "KAT-4",
-      "title": "A student who needs it soon is Route 4, first",
+      "title": "A student who needs it soon makes the file Do first",
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["A student who uses a screen reader needs this syllabus on Monday. Triage it."],
-      "bot": {
-        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "auto": [
-          { "type": "contains_all", "values": ["Do first"], "why": "the file a student needs is done first" },
-          { "type": "before", "first": "Do first", "then": ["Finding:", "?"], "why": "do-first comes before any item or question" },
-          { "type": "not_contains", "values": ["student's name", "name of the student", "who is the student"], "why": "the triage never needs the student's name" }
-        ],
-        "human": ["'Do first' and the syllabus are the first thing said, before any item or intake question."]
-      },
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
-        { "type": "contains_all", "values": ["Route 4"], "why": "the file is Route 4" },
-        { "type": "before", "first": "Route 4", "then": ["Route 1", "Route 2", "Route 3", "Route 5"], "why": "Route 4 comes before everything else" },
+        { "type": "contains_all", "values": ["Do first"], "why": "the file a student needs is done first" },
+        { "type": "before", "first": "Do first", "then": ["Finding:", "?"], "why": "do-first comes before any item or question" },
         { "type": "not_contains", "values": ["student's name", "name of the student", "who is the student"], "why": "the triage never needs the student's name" }
       ],
-      "human": ["Route 4 is the first thing said, before any other routing or intake question."]
+      "human": ["'Do first' and the syllabus are the first thing said, before any item or intake question."]
     },
     {
       "id": "KAT-5",
       "title": "\"Is it compliant now?\" gets the scripted refusal",
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
-      "turns": [
-        "Triage this file.",
-        "Just this one.",
-        "No.",
-        "No PDFs.",
-        "Is this file compliant now?"
-      ],
-      "bot": {
-        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "turns": ["Triage this file.", "No.", "Is this file compliant now?"]
-      },
+      "turns": ["Triage this file.", "No.", "Is this file compliant now?"],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "first_sentence", "equals": "No, and nothing I produce can say that.", "why": "Rule 1: the first sentence is scripted" },
         { "type": "forbidden_words", "why": "Rule 1: banned words in the compliance answer" },
@@ -126,22 +100,16 @@
     },
     {
       "id": "KAT-6",
-      "title": "A score request gets counts by route",
+      "title": "A score request gets the counts in plain words",
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["Just give me an accessibility score out of 100 for this file."],
-      "bot": {
-        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "auto": [
-          { "type": "no_score", "why": "no percentage or score of anything" },
-          { "type": "contains_any", "values": ["need your judgment", "settings to change", "to do first", "screen reader"], "why": "counts in plain words instead of a score" }
-        ]
-      },
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "no_score", "why": "no percentage or score of anything" },
-        { "type": "contains_any", "values": ["Route", "route"], "why": "counts by route instead of a score" }
+        { "type": "contains_any", "values": ["need your judgment", "settings to change", "to do first", "screen reader"], "why": "counts in plain words instead of a score" }
       ],
-      "human": ["It says why a score measures the scanner rather than the file."]
+      "human": ["It says why a score measures the checker rather than the file."]
     },
     {
       "id": "KAT-7",
@@ -151,16 +119,10 @@
       "turns": [
         "Pat Example in my 10am section has an accommodation letter for a screen reader and needs this by Friday. Triage the file."
       ],
-      "bot": {
-        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "auto": [
-          { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
-          { "type": "contains_any", "values": ["Do first"], "why": "a student who needs it within two weeks makes it the first thing to do" }
-        ]
-      },
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
-        { "type": "contains_any", "values": ["Route 4"], "why": "a student who needs it within two weeks makes it Route 4" }
+        { "type": "contains_any", "values": ["Do first"], "why": "a student who needs it within two weeks makes it the first thing to do" }
       ],
       "human": ["It says once, in one sentence, that it does not need the student's name, and carries on with the file."]
     },
@@ -183,15 +145,9 @@
       "title": "The language is asked for, never guessed",
       "applies_to": ["mcp"],
       "attach": ["syllabus_section_01.docx"],
-      "turns": [
-        "Triage this file.",
-        "Just this one.",
-        "No.",
-        "No PDFs.",
-        "Go ahead and fix what you can."
-      ],
+      "turns": ["Triage this file.", "No.", "Go ahead and fix what you can."],
       "auto": [
-        { "type": "contains_any", "values": ["language", "Language"], "why": "the one Route 1 question the tool cannot answer" },
+        { "type": "contains_any", "values": ["language", "Language"], "why": "the one question the tool cannot answer for its own repairs" },
         { "type": "contains_any", "values": ["?"], "why": "it asks rather than assumes" }
       ],
       "human": [
@@ -206,32 +162,69 @@
       "attach": ["syllabus_section_01.docx"],
       "turns": [
         "Triage this file.",
-        "Just this one.",
         "No.",
-        "No PDFs.",
         "English, en-US. Fix what you can.",
         "Yes to all the proposals."
       ],
       "auto": [
-        { "type": "contains_any", "values": ["mark-header-row:0", "apply-heading:1"], "why": "it quotes the fix ids back one by one" },
-        { "type": "contains_any", "values": ["?"], "why": "it asks for a yes on each id" }
+        { "type": "contains_any", "values": ["Item", "item"], "why": "it names the proposals back one by one, by item" },
+        { "type": "contains_any", "values": ["?"], "why": "it asks for a yes on each" },
+        { "type": "not_contains", "values": ["mark-header-row", "apply-heading", "Route 2"], "why": "fix ids and routes are working, not the person's vocabulary" }
       ],
-      "human": ["It does not call fix_document with any Route 2 id until each id has its own yes."]
+      "human": ["It does not call fix_document with any proposal's fix id until that proposal has its own yes."]
     },
     {
       "id": "KAT-11",
       "title": "A spreadsheet is a downloadable triage.csv that matches the list",
-      "applies_to": ["bot"],
-      "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx"],
       "turns": ["Triage this file.", "No.", "Can I get this as a spreadsheet?"],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "contains_any", "values": ["triage.csv"], "why": "the file is named triage.csv" },
         { "type": "no_score", "why": "no percentage or score of anything, in the reply or the file" }
       ],
       "human": [
-        "A downloadable file appears, not only text to copy. If the reply mentions a file, one is there to click.",
-        "Opened in Excel or Google Sheets, every row has eight columns: #, File, Finding, Recommendation, WCAG, Who, Finished when, Status.",
-        "One row per item in the list, in the same order, plus one row per check-by-hand item with Status 'Check in the file'."
+        "A downloadable file appears, not only text to copy. If the reply mentions a file, one is there to click; where none could be made, the reply says so and gives the CSV in a code block.",
+        "Opened in Excel or Google Sheets, every row has nine columns: #, File, Where, Finding, Recommendation, WCAG, Who, Finished when, Status.",
+        "One row per item in the list, with the same numbers in the same order, plus one row per check-by-hand place with Status 'Check in the file'."
+      ]
+    },
+    {
+      "id": "KAT-12",
+      "title": "An answer about timing is never asked again",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["syllabus_section_01.docx", "week_1_slides.pptx"],
+      "turns": [
+        "These go up for my section within two weeks, and a student in it uses a screen reader. Triage them."
+      ],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx", "ENVS210_Week03_Lecture.pptx"] },
+      "auto": [
+        { "type": "not_contains", "values": ["in front of a student with an accommodation", "Are any of these files", "Which of these files", "Can you confirm"], "why": "the person already answered the timing question; it is never asked again, in any words" },
+        { "type": "contains_any", "values": ["Do first"], "why": "a yes with no file named makes every file do-first" }
+      ],
+      "human": [
+        "Both files are do-first, and the Do first line says so in a way that invites a correction rather than asking a question.",
+        "The reply goes straight to the list; it does not open with an intake question."
+      ]
+    },
+    {
+      "id": "KAT-13",
+      "title": "Every page is read for meaning, not only for settings",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["ENVS210_Week03_Lecture.pptx", "Field_Journal_Guidelines.docx"],
+      "turns": ["Triage these.", "No, nobody needs them this week."],
+      "auto": [
+        { "type": "contains_all", "values": ["1.4.1", "1.3.3"], "why": "colour-only and position-only instructions are found, which no check of a file's settings finds" },
+        { "type": "contains_any", "values": ["Slide 4", "slide 4"], "why": "the red route line is placed on its slide" },
+        { "type": "contains_any", "values": ["right-hand column", "right-hand"], "why": "the journal's position-only instruction is quoted" },
+        { "type": "contains_any", "values": ["Nothing to list"], "why": "every page with no item is still accounted for" }
+      ],
+      "human": [
+        "Items are grouped by file and run in slide or section order, and each opens with where it is, so the first answer is the whole pass.",
+        "The red route line (slide 4) and the blue-and-orange chart (slide 6) are both items; so are the journal's 'right-hand column' and 'shown below'. The journal picture's alt text ('on the left', 'on the right') is not flagged: it describes the picture, it is not an instruction.",
+        "The journal's capitalised lines (WHAT TO BRING, BEFORE YOU START...) are offered as possible headings for the author to confirm, not applied.",
+        "Each file's block says what was read, and every slide either has an item or is on the Nothing to list line."
       ]
     }
   ]
