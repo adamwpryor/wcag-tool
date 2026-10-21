@@ -119,8 +119,11 @@ breaks.
 ## Scanning, where you can
 
 A scan reads a file's settings: alt text, table header marks, the title, the language, heading
-styles, empty headings, and where links point. It does not read for meaning, so it never
-replaces *Reading every page*, and a scan with few findings is never a reason to read less.
+styles, empty headings, where links point, and in a PDF the pages that hold pictures or unnamed
+fill-in fields. It does not read for meaning, so it never replaces *Reading every page*, and a
+scan with few findings is never a reason to read less. What a scan does find is fact: its page
+numbers and counts win over your own reading, and a setting it reports (or does not report, for
+a check it ran) needs no "I can't see whether".
 
 **If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document`,
 `describe_routes` and `explain_criterion`), run `scan_folder` on the folder when there is more
@@ -158,7 +161,9 @@ you write the list.
    by bold line where there are no headings), including tables, text boxes, captions and any
    header or footer you can see. Do not sample, skim, or stop at the first example of a problem:
    each instance is its own item. The same problem repeated in one file is one item that names
-   every place ("slides 3, 5 and 6").
+   every place ("slides 3, 5 and 6"). Number each page as it is printed on the page (a footer
+   such as "24 / 24" or "Page 3") and name it by its heading too; where nothing is printed,
+   count from the first page and check your count against the last page, so it never drifts.
 2. **On every page, look for each of these.** They are judgments a reader makes from the words
    and the pictures. No check of a file's settings makes them, so they are never skipped because
    other findings exist.
@@ -172,7 +177,12 @@ you write the list.
      where the words could be text.
    - **Pictures that carry meaning** (1.1.1): every chart, diagram, map and photo. Note what each
      seems to show, so the question to the author is specific. A chart's point also needs saying
-     in words; the alt-text file says how.
+     in words; the alt-text file says how. A diagram built from boxes of real text, words you
+     could select and copy, is not a picture: it needs its reading order checked (1.3.2), not
+     alt text.
+   - **Fill-in boxes and checkboxes** (4.1.2, 3.3.2): every field needs a name a screen reader
+     announces, or it is read out as nothing or as "Text Field0". One item per page that has
+     fields, saying how many, with the words printed beside each field as the name to give it.
    - **Structure you can see** (1.3.1, 2.4.6): a long document with no headings, a heading level
      that jumps, a slide with no title or the same title on several slides, a list typed with
      dashes instead of made a list, a table used for layout. A line that looks like a heading is
@@ -187,8 +197,12 @@ you write the list.
    the setting, the Finding states it. If you cannot, the Finding says what you can see and that
    you cannot see the setting: *"The first row (Station, Record, Time) reads as column names; I
    can't see whether it is marked as a header row."* Never state a setting you could not read as
-   a fact either way: not *"the PDF is untagged"* unless you read its tags. Contrast cannot be
-   judged by eye: text that looks faint is an item phrased the same way.
+   a fact either way: not *"the PDF is untagged"* unless you read its tags. Once a scan has
+   read it, it is a fact: in a PDF with no tags, no picture has alt text and no table has header
+   cells, so say so. For a title or language you cannot see, the Recommendation says what it
+   should be and to change it only if it is not: *"Check it reads 'Name the Problem, Build the
+   Tool'; if it is empty or the file name, type that."* Contrast cannot be judged by eye: text
+   that looks faint is an item phrased the same way.
 4. **Account for every page.** Before you write the reply, each page or slide either has an item
    or is named on that file's *Nothing to list* line, and a page with a picture, table or link
    is never on that line. A page you could not read is said, with why.

@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from wcag_tool import engine
+from wcag_tool.demo import make_worksheet_pdf
 
 
 def test_pptx_scan_and_fix(bad_pptx: Path) -> None:
@@ -35,6 +36,20 @@ def test_pdf_scan_and_fix(bad_pdf: Path) -> None:
     assert set(record["applied"]) == {"set-title", "set-language"}
     after = {f["check"] for f in record["after"]["findings"]}
     assert after == {"pdf.untagged"}
+
+
+def test_pdf_pictures_and_fields_are_found_page_by_page(tmp_path: Path) -> None:
+    path = make_worksheet_pdf(tmp_path / "observation_worksheet.pdf")
+    found = [(f.check, f.locator) for f in engine.scan(path).findings]
+    # Both pages share the resource dictionary holding the picture; only page 1 draws it.
+    assert ("pdf.picture-untagged", "page 1") in found
+    assert ("pdf.picture-untagged", "page 2") not in found
+    fields = next(f for f in engine.scan(path).findings if f.check == "pdf.form-field-no-name")
+    assert fields.locator == "page 2"
+    # The checkbox has a tooltip, so only the two text fields are named.
+    assert "'Text Field0', 'Text Field1'." in fields.evidence
+    assert "Check Box0" not in fields.evidence
+    assert fields.fix_id is None, "the tool never writes a field's name; the author does"
 
 
 def test_unsupported_extension(tmp_path: Path) -> None:

@@ -56,7 +56,7 @@ Criterion text is quoted from [WCAG 2.1](https://www.w3.org/TR/WCAG21/) (W3C Rec
 | 3.3.3 Error Suggestion | AA | if present | if present | if present |
 | 3.3.4 Error Prevention (Legal, Financial, Data) | AA | if present | if present | if present |
 | 4.1.1 Parsing | A | not checked | not checked | not checked |
-| 4.1.2 Name, Role, Value | A | if present | if present | if present |
+| 4.1.2 Name, Role, Value | A | if present | if present | in part |
 | 4.1.3 Status Messages | AA | if present | if present | if present |
 
 ## 1.1.1 Non-text Content (Level A)
@@ -73,7 +73,7 @@ Criterion text is quoted from [WCAG 2.1](https://www.w3.org/TR/WCAG21/) (W3C Rec
 
 - **Word**: checked in part by `docx.image-missing-alt`; still to judge: whether alt text that exists says what the image conveys in this course. *Who:* the author.
 - **PowerPoint**: checked in part by `pptx.image-missing-alt`; still to judge: whether alt text that exists says what the picture conveys; charts, SmartArt and grouped shapes are not checked. *Who:* the author.
-- **PDF**: checked in part by `pdf.scanned-no-text`; still to judge: alt text on figures inside the tag tree is not read; only pages with no text at all are found. *Who:* an expert.
+- **PDF**: checked in part by `pdf.scanned-no-text`, `pdf.picture-untagged`; still to judge: alt text on figures inside the tag tree is not read; pictures are found page by page only in an untagged file, and drawings made of vector shapes are not found; pages with no text at all are found. *Who:* an expert.
 
 ## 1.2.1 Audio-only and Video-only (Prerecorded) (Level A)
 
@@ -596,7 +596,7 @@ Criterion text is quoted from [WCAG 2.1](https://www.w3.org/TR/WCAG21/) (W3C Rec
 
 - **Word**: if the file has form fields or other controls; not checked: controls expose a name, a role and their state to assistive technology. *Who:* an expert.
 - **PowerPoint**: if the file has form fields or other controls; not checked: controls expose a name, a role and their state to assistive technology. *Who:* an expert.
-- **PDF**: if the file has form fields or other controls; not checked: controls expose a name, a role and their state to assistive technology. *Who:* an expert.
+- **PDF**: checked in part by `pdf.form-field-no-name`; still to judge: a field with no tooltip is found; whether a tooltip names what to enter, and whether each field's role and state reach assistive technology, are not. *Who:* an expert.
 
 ## 4.1.3 Status Messages (Level AA)
 

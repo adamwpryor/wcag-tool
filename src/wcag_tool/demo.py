@@ -18,7 +18,16 @@ from docx.oxml.ns import qn
 from pptx import Presentation
 from pptx.util import Inches
 from pypdf import PdfWriter
-from pypdf.generic import ContentStream, DictionaryObject, NameObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DecodedStreamObject,
+    DictionaryObject,
+    FloatObject,
+    NameObject,
+    NumberObject,
+    TextStringObject,
+)
 
 # A 1x1 transparent PNG, so no image file has to ship with the package.
 PNG_1X1 = base64.b64decode(
@@ -188,6 +197,98 @@ def make_scanned_pdf(path: Path) -> Path:
     return path
 
 
+def _field(
+    kind: str, name: str, rect: tuple[int, int, int, int], tooltip: str = ""
+) -> DictionaryObject:
+    """A form field that is also its own widget, as most exporters write them."""
+    field = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Widget"),
+            NameObject("/FT"): NameObject(kind),
+            NameObject("/T"): TextStringObject(name),
+            NameObject("/Rect"): ArrayObject([FloatObject(v) for v in rect]),
+        }
+    )
+    if tooltip:
+        field[NameObject("/TU")] = TextStringObject(tooltip)
+    return field
+
+
+def make_worksheet_pdf(path: Path) -> Path:
+    """Write an untagged two-page worksheet with a picture and fill-in fields.
+
+    The title and language are set, so only the page-by-page checks fire. Both
+    pages share one resource dictionary that holds the picture, as WeasyPrint
+    writes it, but only page 1 draws it: page 2 must not be reported as having a
+    picture. Page 2 has two fields with no tooltip and one with a tooltip.
+
+    Args:
+        path: Where to write the file.
+
+    Returns:
+        The path written.
+    """
+    writer = PdfWriter()
+    writer.add_metadata({"/Title": "Field observation worksheet"})
+    writer.root_object[NameObject("/Lang")] = TextStringObject("en-US")
+    picture = DecodedStreamObject()
+    picture.set_data(b"\x80")
+    picture.update(
+        {
+            NameObject("/Type"): NameObject("/XObject"),
+            NameObject("/Subtype"): NameObject("/Image"),
+            NameObject("/Width"): NumberObject(1),
+            NameObject("/Height"): NumberObject(1),
+            NameObject("/ColorSpace"): NameObject("/DeviceGray"),
+            NameObject("/BitsPerComponent"): NumberObject(8),
+        }
+    )
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    resources = writer._add_object(
+        DictionaryObject(
+            {
+                NameObject("/Font"): DictionaryObject({NameObject("/F1"): font}),
+                NameObject("/XObject"): DictionaryObject(
+                    {NameObject("/Im0"): writer._add_object(picture)}
+                ),
+            }
+        )
+    )
+    pages = (
+        b"BT /F1 16 Tf 72 720 Td (Field observation worksheet) Tj ET\n"
+        b"q 200 0 0 120 72 560 cm /Im0 Do Q\n",
+        b"BT /F1 12 Tf 72 720 Td (Site name) Tj ET\n"
+        b"BT /F1 12 Tf 72 680 Td (Weather) Tj ET\n"
+        b"BT /F1 12 Tf 72 640 Td (Consent script read) Tj ET\n",
+    )
+    for data in pages:
+        page = writer.add_blank_page(width=612, height=792)
+        page[NameObject("/Resources")] = resources
+        content = ContentStream(None, writer)
+        content.set_data(data)
+        page.replace_contents(content)
+    fields = [
+        _field("/Tx", "Text Field0", (200, 712, 500, 732)),
+        _field("/Tx", "Text Field1", (200, 672, 500, 692)),
+        _field("/Btn", "Check Box0", (250, 632, 266, 648), tooltip="Consent script read"),
+    ]
+    refs = [writer._add_object(field) for field in fields]
+    writer.pages[1][NameObject("/Annots")] = ArrayObject(refs)
+    writer.root_object[NameObject("/AcroForm")] = DictionaryObject(
+        {NameObject("/Fields"): ArrayObject(refs)}
+    )
+    with path.open("wb") as handle:
+        writer.write(handle)
+    return path
+
+
 def make_test_set(directory: Path) -> list[Path]:
     """The demo pile plus one file for each check the demo does not trigger.
 
@@ -204,6 +305,7 @@ def make_test_set(directory: Path) -> list[Path]:
         *make_demo_set(directory),
         make_unstructured_docx(directory / "field_exercise_handout.docx"),
         make_scanned_pdf(directory / "scanned_article.pdf"),
+        make_worksheet_pdf(directory / "observation_worksheet.pdf"),
     ]
 
 

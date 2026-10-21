@@ -12,8 +12,8 @@ From this folder:
 python scripts/selftest.py
 ```
 
-It scans the seven fictional files in `tests/fixtures/` and compares each result with
-`tests/expected/`. You should see `8 of 8 match the expected results.` If a library is missing it
+It scans the eight fictional files in `tests/fixtures/` and compares each result with
+`tests/expected/`. You should see `9 of 9 match the expected results.` If a library is missing it
 stops and prints the one install line you need.
 
 In an assistant that runs code (claude.ai with code execution, Claude Code), upload this folder and

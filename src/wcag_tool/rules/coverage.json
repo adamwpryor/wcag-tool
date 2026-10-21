@@ -17,7 +17,7 @@
       "pdf": {
         "status": "checked_in_part",
         "who": "expert",
-        "note": "alt text on figures inside the tag tree is not read; only pages with no text at all are found"
+        "note": "alt text on figures inside the tag tree is not read; pictures are found page by page only in an untagged file, and drawings made of vector shapes are not found; pages with no text at all are found"
       }
     },
     {
@@ -974,10 +974,9 @@
         "when": "form fields or other controls"
       },
       "pdf": {
-        "status": "if_present",
+        "status": "checked_in_part",
         "who": "expert",
-        "note": "controls expose a name, a role and their state to assistive technology",
-        "when": "form fields or other controls"
+        "note": "a field with no tooltip is found; whether a tooltip names what to enter, and whether each field's role and state reach assistive technology, are not"
       }
     },
     {

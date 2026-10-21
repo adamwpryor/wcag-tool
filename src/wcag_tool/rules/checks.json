@@ -256,6 +256,36 @@
       "proposal": "Find the original document, or run OCR and then check the recognized text against the page.",
       "template_fix": "Find what these files have in common and fix it there.",
       "from_text": "partial"
+    },
+    {
+      "id": "pdf.picture-untagged",
+      "format": "pdf",
+      "criterion": "1.1.1",
+      "finding": "Pictures on a page of an untagged file",
+      "looks_at": "each page with text that draws a picture, in a file with no tags",
+      "route": 2,
+      "closure": "expert_verified",
+      "confidence": "high",
+      "fix_id": null,
+      "remedy": "Tag the file first; then give each picture alt text, or mark it decorative",
+      "proposal": "Fix it in the source and export again with tags on. With no source: tag the file in Acrobat, then for each picture on this page, Set alternate text: alt text that says what it shows, or tick Decorative figure.",
+      "template_fix": "Fix the export: 'Document structure tags for accessibility' on, and alt text or Mark as decorative set on each picture in the source.",
+      "from_text": "partial"
+    },
+    {
+      "id": "pdf.form-field-no-name",
+      "format": "pdf",
+      "criterion": "4.1.2",
+      "finding": "Fill-in fields with no name",
+      "looks_at": "each fill-in field and checkbox carries a tooltip, the name a screen reader announces",
+      "route": 2,
+      "closure": "content_owner_verified",
+      "confidence": "high",
+      "fix_id": null,
+      "remedy": "Give each field a tooltip in the words printed beside it",
+      "proposal": "For each field on this page, Acrobat: All tools › Prepare a form › right-click the field › Properties › General › Tooltip, and type what goes in it, in the words printed beside it.",
+      "template_fix": "Name the fields where the form is made, so every copy carries them.",
+      "from_text": "no"
     }
   ]
 }
