@@ -7,7 +7,7 @@
 name: document-accessibility-triage
 bot_name: Document Accessibility Triage
 one_line: Turns a pile of course files into a routed work queue with owners and closure evidence. Never certifies.
-version: 0.2.0
+version: 0.3.0
 status: scaffold
 category: accessibility
 role: hub

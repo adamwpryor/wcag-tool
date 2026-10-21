@@ -119,7 +119,7 @@ Every assistant needs the same two things: the **command**, which is the path fr
 
 ```text
 --from
-git+https://github.com/adamwpryor/wcag-tool@v0.2.0
+git+https://github.com/adamwpryor/wcag-tool@v0.3.0
 wcag-tool
 ```
 
@@ -130,7 +130,7 @@ Several assistants take them as a block of settings text, like this:
   "mcpServers": {
     "wcag-tool": {
       "command": "PASTE THE PATH FROM STEP 3 HERE",
-      "args": ["--from", "git+https://github.com/adamwpryor/wcag-tool@v0.2.0", "wcag-tool"]
+      "args": ["--from", "git+https://github.com/adamwpryor/wcag-tool@v0.3.0", "wcag-tool"]
     }
   }
 }
@@ -150,7 +150,7 @@ clock and choose **Quit**. Open it again.
 **ChatGPT desktop app.** Open **Settings**, then **MCP servers**, then **Add server**. Name it
 `wcag-tool`, choose **STDIO**, enter the path from step 3 as the command and the three lines above
 as its arguments (if the form has a single box, put it all on one line:
-`PATH --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool`). Save, then choose
+`PATH --from git+https://github.com/adamwpryor/wcag-tool@v0.3.0 wcag-tool`). Save, then choose
 **Restart**. Local servers work in the desktop app, not in ChatGPT in a web browser.
 
 **Google Antigravity.** In the agent panel, click **…** at the top, choose **MCP Servers**, then
@@ -159,8 +159,8 @@ it.
 
 **Claude Code, Codex or Gemini CLI.** In a terminal:
 
-- Claude Code: `claude mcp add wcag-tool -- uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool`
-- Codex: `codex mcp add wcag-tool -- uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool`
+- Claude Code: `claude mcp add wcag-tool -- uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.3.0 wcag-tool`
+- Codex: `codex mcp add wcag-tool -- uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.3.0 wcag-tool`
 - Gemini CLI: add the block to the `settings.json` file in the `.gemini` folder of your home
   folder.
 
@@ -176,7 +176,7 @@ everything; after that it starts at once.
 can see what the tool does without touching your own. In the terminal, run:
 
 ```bash
-uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.2.0 wcag-tool demo ~/wcag-demo
+uvx --from git+https://github.com/adamwpryor/wcag-tool@v0.3.0 wcag-tool demo ~/wcag-demo
 ```
 
 This creates a folder called `wcag-demo` in your home folder with five files in it.
