@@ -224,7 +224,7 @@
         "Items are grouped by file and run in slide or section order, and each opens with where it is, so the first answer is the whole pass.",
         "The red route line (slide 4) and the blue-and-orange chart (slide 6) are both items; so are the journal's 'right-hand column' and 'shown below'. The journal picture's alt text ('on the left', 'on the right') is not flagged: it describes the picture, it is not an instruction.",
         "The journal's capitalised lines (WHAT TO BRING, BEFORE YOU START...) are offered as possible headings for the author to confirm, not applied.",
-        "Every picture and table is an item on its page, not in a separate list; no slide with a picture or table is on the Nothing to list line.",
+        "Every table is an item on its slide; every picture is in Pictures, in order, with what it looks like and Decorative or a DRAFT; no slide with a table is on the Nothing to list line.",
         "Each file's block says what was read, and every slide either has an item or is on the Nothing to list line."
       ]
     },
@@ -241,9 +241,49 @@
         { "type": "not_contains", "values": ["Check these in the file", "is untagged"], "why": "every item sits on its page, and a setting that could not be read is never stated as fact" }
       ],
       "human": [
-        "Title, language and tags sit under Entire document; then each page with anything on it has its own bold line and items.",
-        "Each Recommendation is Acrobat steps with the real words filled in (the title to type, the link's new name), and says to fix the source instead if it still exists.",
+        "The six parts appear in order, each with its number: Entire document, Page by page, Pictures in order, Fill-in fields, Check your work, Try it with a screen reader; an empty part says None.",
+        "Each Recommendation is Acrobat steps with the real words filled in (the title to check, the link's new name), and the file line says to fix the source instead if it still exists.",
         "If the source question is asked, it is the closing question, after the list."
+      ]
+    },
+    {
+      "id": "KAT-15",
+      "title": "A PDF with no source: no re-asking, and one page per heading",
+      "applies_to": ["skill", "bot"],
+      "attach": ["week_1_reading_list.pdf"],
+      "turns": [
+        "Students get this Friday. I don't have the Word file it came from, only this PDF. Triage it."
+      ],
+      "bot": { "attach": ["Week03_Reading_List.pdf"] },
+      "auto": [
+        { "type": "not_contains", "values": ["still have the Word", "original Word", "have the source", "the file it came from?", "exported from?"], "why": "the person said there is no source; it is never asked again" },
+        { "type": "not_regex", "pattern": "^\\s*\\d*\\.?\\s*Pages \\d+,", "why": "never several pages under one heading: one bold line per page" },
+        { "type": "contains_all", "values": ["Entire document", "Pictures, in order", "Fill-in fields", "Check your work"], "why": "the fixed template, every part present" }
+      ],
+      "human": [
+        "Every picture in the file appears in Pictures, in order, cover included, each with what it looks like; count them against the file.",
+        "Fill-in fields are listed page by page with the printed labels as tooltip names, or the reply says the boxes are for pen and paper.",
+        "Check your work offers to read Acrobat's report."
+      ]
+    },
+    {
+      "id": "KAT-16",
+      "title": "A pasted checker report becomes items, never a verdict",
+      "applies_to": ["skill", "bot"],
+      "attach": ["week_1_reading_list.pdf"],
+      "turns": [
+        "Triage this. Nobody needs it this week, and I don't have the source.",
+        "Here's Acrobat's accessibility report. Figures alternate text: Failed (3). Tables, Headers: Failed (2). Logical Reading Order: Needs manual check. Color contrast: Needs manual check. Title: Passed. Primary language: Passed."
+      ],
+      "bot": { "attach": ["Week03_Reading_List.pdf"] },
+      "auto": [
+        { "type": "not_contains", "values": ["passed", "passes"], "why": "what the checker passed is its word, never repeated as a verdict" },
+        { "type": "contains_any", "values": ["Finding:"], "why": "failed and manual-check rules become items" },
+        { "type": "no_score", "why": "no percentage or score of anything" }
+      ],
+      "human": [
+        "Each failed or manual-check rule is matched to an existing item by number, or added as a new numbered item in its part.",
+        "Reading order and colour contrast become items for a person to check, not dismissed."
       ]
     }
   ]

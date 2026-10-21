@@ -45,6 +45,8 @@ anywhere else.
 
 <!-- include:SKILL.md#The list -->
 
+<!-- include:SKILL.md#A checker's report -->
+
 <!-- include:SKILL.md#A spreadsheet -->
 
 <!-- include:SKILL.md#Drafts and proposals -->

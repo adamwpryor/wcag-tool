@@ -52,10 +52,13 @@ recommendation, then the WCAG criterion, who does it and what counts as finished
 ends with the pages that had nothing to list. On request the bot creates the same list as a
 downloadable `triage.csv` (BoodleBox models can create files) with a Status column to check items
 off in Excel or Google Sheets. If a file cannot be created it says so and gives the CSV as text;
-it never claims a file that is not there. The list is a work order: the whole document first,
-then every page with a picture, table, link or problem on it, each item with the click path for
-the program the person will use (Acrobat for a PDF with no source) and a DRAFT alt text where a
-picture means something. It ends with one question that moves the work. It drafts alt text and
+it never claims a file that is not there. The list is a work order in a fixed template of six
+parts, the same every time: *Entire document*; *Page by page* for everything made of words;
+*Pictures, in order*, each described, decorative or with a DRAFT, for Acrobat's Set alternate
+text to step through; *Fill-in fields*, with the printed labels to use as names; *Check your
+work*, which runs Acrobat's or Office's own checker and offers to read its report back; and one
+*Try it with a screen reader* task. The program finds pictures and fields; the bot, which cannot
+place them by page reliably, judges them. It ends with one question that moves the work. It drafts alt text and
 headings for the author to approve, and ends with the bounded claim. It is the no-install path
 to the same rules the MCP tool enforces.
 
@@ -101,10 +104,10 @@ Paste **`dist/wcag-triage-bot/instructions.md`** into the Instructions field. It
 `bot/instructions.md` (the bot's own opening, report and out-of-scope answers) with the rules and
 the shared session flow spliced in from `skill/SKILL.md` word for word: *The three rules you never
 break*, *Speak plainly*, *Keep it short*, *Intake*, *Reading every page*, *The list*, *A
-spreadsheet*, *Drafts and proposals* and *Where things are fixed*. They are in this text, not
+checker's report*, *A spreadsheet*, *Drafts and proposals* and *Where things are fixed*. They are in this text, not
 only in the knowledge files: a knowledge index retrieves pieces, and the refusal must never
 depend on retrieval. A test fails if a splice is missing or if a tool name leaks into the bot
-text. The built text is about 23,800 characters; if the Instructions field refuses it, shorten
+text. The built text is about 25,600 characters; if the Instructions field refuses it, shorten
 the example in SKILL.md's *The list* first.
 
 Do not hand-edit the pasted text. Change the session flow and the rules in `skill/SKILL.md`, the
@@ -143,7 +146,7 @@ Do **not** attach `dist/wcag-triage-bot/test-files/`. Those are for testing the 
 ## 5. Known-answer tests — run in a fresh session after every change
 
 The cases live in `skill/tests/evals.json`, shared with the skill and the MCP tool, so all three
-are held to the same answers. Eleven apply to the bot (KAT-1 to KAT-8 and KAT-11 to KAT-13;
+are held to the same answers. Fourteen apply to the bot (KAT-1 to KAT-8 and KAT-11 to KAT-16;
 KAT-9 and KAT-10 need the MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
 built by `src/wcag_tool/course_pack.py`. It reads like a real course, so the bot has to find
 the defects among content that is fine:
@@ -179,7 +182,9 @@ its file name.
 | 7 | Name a student and their accommodation | The name is never repeated; *Do first* |
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
 | 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the nine columns (Where is the third), one row per list item with the same numbers; one sentence, nothing claimed that is not there |
-| 14 | Upload a PDF and say "students get this Thursday" | The whole list in the first reply: *Entire document*, then each page with its items and Acrobat steps; the PDF-source question, if asked, comes after the list |
+| 14 | Upload a PDF and say "students get this Thursday" | The whole list in the first reply, in the six-part template; the PDF-source question, if asked, comes after the list |
+| 15 | Upload a long PDF and say there is no Word file | Never asks about the source again; one bold line per page, never "Pages 2, 3, 5"; every part of the template present |
+| 16 | After a triage, paste Acrobat's accessibility report | Each failed or manual-check rule matched to an item by number or added as a new one; nothing the checker passed repeated as a verdict |
 | 12 | Say "these go up within two weeks, and a student uses a screen reader" | Never asks the student question again, in any words; every file is *Do first*, with an invitation to correct it |
 | 13 | Upload the deck and the field journal | Finds the red route line on slide 4, the colour-only chart on slide 6 and the journal's "right-hand column" in one pass; every slide has an item or is on a *Nothing to list* line |
 

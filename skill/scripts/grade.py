@@ -80,6 +80,8 @@ def check(rule: dict[str, Any], reply: str, evals: dict[str, Any]) -> bool:
         )
     if kind == "no_score":
         return _SCORE.search(plain) is None
+    if kind == "not_regex":
+        return re.search(rule["pattern"], plain, re.MULTILINE) is None
     if kind == "before":
         first = plain.find(rule["first"])
         later = [plain.find(t) for t in rule["then"] if t in plain]

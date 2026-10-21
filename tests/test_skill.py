@@ -39,6 +39,7 @@ _SHARED = (
     "Intake",
     "Reading every page",
     "The list",
+    "A checker's report",
     "A spreadsheet",
     "Drafts and proposals",
     "Where things are fixed",
@@ -150,6 +151,30 @@ def test_scan_script_is_read_only(tmp_path: Path) -> None:
             "Do first: the reading list. Do you still have the Word file it came from?",
             False,
         ),
+        (
+            "KAT-15",
+            '1 · Entire document\n2 · Page by page\n**Page 3, "The two AIs"**\n'
+            "3 · Pictures, in order\n4 · Fill-in fields\n5 · Check your work",
+            True,
+        ),
+        (
+            "KAT-15",
+            "1 · Entire document\n2 · Page by page\n**Pages 2, 3, 5, 8**\n5. The tables\n"
+            "3 · Pictures, in order\n4 · Fill-in fields\n5 · Check your work",
+            False,
+        ),
+        (
+            "KAT-15",
+            "1 · Entire document\n3 · Pictures, in order\n4 · Fill-in fields\n"
+            "5 · Check your work\nDo you still have the Word file?",
+            False,
+        ),
+        (
+            "KAT-16",
+            "6. Figures: matches items 3 to 5.\n9. Reading order\n   Finding: Acrobat flags it.",
+            True,
+        ),
+        ("KAT-16", "Title and language passed, so those are settled. Finding: none.", False),
     ],
 )
 def test_grader_scores_known_replies(tmp_path: Path, case: str, reply: str, passes: bool) -> None:
@@ -278,10 +303,10 @@ def test_gemini_pack_is_prose_and_rules_only() -> None:
         assert wanted in files, wanted
     skill = files["SKILL.md"].decode("utf-8")
     assert "scripts/" not in skill and "variant:" not in skill
-    assert "but you can run code" not in skill
+    # The run-code paragraph and every part that needs the wcag-tool are left out.
+    for gone in ("but you can run code", "scan_folder", "fix_document", "## Fixing"):
+        assert gone not in skill, gone
     assert "If no tool is connected and you cannot run code" in skill
-    # Everything outside the marked paragraph is SKILL.md word for word.
+    # Everything outside the marked parts is SKILL.md word for word.
     source = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
-    before, rest = source.split("<!-- variant:", 1)
-    after = rest.split("<!-- /variant:", 1)[1].split("\n", 1)[1]
-    assert skill == before + after
+    assert skill == build_skill._VARIANT.sub("", source)

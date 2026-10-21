@@ -116,6 +116,7 @@ breaks.
   ask.
 - Never ask who the student is. You never need a name.
 
+<!-- variant:tool -->
 ## Scanning, where you can
 
 A scan reads a file's settings: alt text, table header marks, the title, the language, heading
@@ -136,6 +137,7 @@ Each entry in `systemic` is a *fix it once in the template* item. The result's `
 quotes W3C's text for every criterion a finding names; use it, or `explain_criterion`, when the
 author asks why.
 
+<!-- /variant:tool -->
 <!-- variant:run-code -->
 **If no tool is connected but you can run code** (an assistant with code execution, Claude Code,
 a notebook) and this skill's `scripts/` folder is with you, run
@@ -181,8 +183,9 @@ you write the list.
      could select and copy, is not a picture: it needs its reading order checked (1.3.2), not
      alt text.
    - **Fill-in boxes and checkboxes** (4.1.2, 3.3.2): every field needs a name a screen reader
-     announces, or it is read out as nothing or as "Text Field0". One item per page that has
-     fields, saying how many, with the words printed beside each field as the name to give it.
+     announces, or it is read out as nothing or as "Text Field0". Look for empty boxes, lines
+     to write on and squares to tick; note the words printed beside each, which become its
+     name.
    - **Structure you can see** (1.3.1, 2.4.6): a long document with no headings, a heading level
      that jumps, a slide with no title or the same title on several slides, a list typed with
      dashes instead of made a list, a table used for layout. A line that looks like a heading is
@@ -192,7 +195,8 @@ you write the list.
    - **Another language** (3.1.2): a passage or quotation not in the document's language.
    - **Media** (1.2): an embedded video or audio file, which needs captions and a transcript.
    - **A PDF page with no text** (1.1.1): a scan, where every word is a picture.
-3. **Every picture, table and link is an item on its page,** whether or not you can read its
+3. **Every table and link is an item on its page, and every picture and field is an item in its
+   own part of the list,** whether or not you can read its
    settings (alt text, header marks, heading styles, tags, where a link points). If you can read
    the setting, the Finding states it. If you cannot, the Finding says what you can see and that
    you cannot see the setting: *"The first row (Station, Record, Time) reads as column names; I
@@ -204,86 +208,81 @@ you write the list.
    Tool'; if it is empty or the file name, type that."* Contrast cannot be judged by eye: text
    that looks faint is an item phrased the same way.
 4. **Account for every page.** Before you write the reply, each page or slide either has an item
-   or is named on that file's *Nothing to list* line, and a page with a picture, table or link
-   is never on that line. A page you could not read is said, with why.
+   or is named on that file's *Nothing to list* line, and a page with a table or link is never
+   on that line. Before you send, count the pictures you listed against the pictures you saw,
+   cover included, and the fields against the boxes. A page you could not read is said, with
+   why.
 
 ## The list
 
-The list is a work order: the person opens the file, starts at the top, and moves through it
-page by page, doing each item as they reach it. **The first list is the whole list.** Nothing is
-held back for a second ask; a person who has to ask for "page by page" or "everything" was given
-half a list.
+The list is a work order: the person opens the file and works down it, and nothing they need is
+anywhere else. **The first list is the whole list.** Nothing is held back for a second ask.
 
-One reply, written as Markdown so it renders: bold labels, numbered items, sub-bullets, a blank
-line between parts. Never put the list in a code block. It looks like this (the source is shown
-so you can see the marks; write it so it renders):
+Use this template every time, for every file, in this order. Every part appears, with *None.*
+when it is empty; never merge parts, rename them, or put several pages under one heading. One
+reply, written as Markdown so it renders, never in a code block. The source is shown here so
+you can see the marks:
 
 ```markdown
-**Do first:** `ENVS210_Week03_Lecture.pptx`, students see it Friday.
+**Do first:** `build-method-workbook.pdf`, students see it Friday.
 
-**In these files:** 9 items · 5 need your judgment · 1 setting to change · 1 to try with a
+**In these files:** 19 items · 11 pictures to settle · 28 fields to name · 1 to try with a
 screen reader
 
-**`ENVS210_Week03_Lecture.pptx`** · Do first · read: slides 1 to 7 and their notes
+**`build-method-workbook.pdf`** · Do first · read: pages 1 to 24
 
-**Entire document**
+**1 · Entire document**
 
 1. **Title**
-   - **Finding:** The title property is empty, so a screen reader announces the file name.
-   - **Recommendation:** File › Info › Properties › Title: type "Week 3: Reading the Built
-     Environment".
-   - **WCAG** 2.4.2 Page Titled · **Who:** you · **Finished when:** the setting is changed
+   - **Finding:** I can't see the title setting.
+   - **Recommendation:** File › Properties › Description › Title: check it reads "Name the
+     Problem, Build the Tool"; if it is empty or the file name, type that. Then Initial View ›
+     Show: Document Title.
+   - **WCAG** 2.4.2 Page Titled · **Who:** you · **Finished when:** it reads that
 
-**Slide 1, "Week 3: Reading the Built Environment"**
+**2 · Page by page**
 
-2. **The department logo**
-   - **Finding:** A logo with no alt text. It repeats what the slide says, so it looks
-     decorative.
-   - **Recommendation:** Right-click › View Alt Text › tick *Mark as decorative*. If it means
-     more than the course name, tell me.
-   - **WCAG** 1.1.1 Non-text Content · **Who:** you · **Finished when:** it's marked decorative
+**Page 4, "Three windows, one circuit"**
 
-**Slide 4, "Thursday's route"**
+2. **The circuit diagram**
+   - **Finding:** It is built from boxes of real text, not a picture, so it needs no alt text;
+     a screen reader must reach the boxes in order 1 to 5.
+   - **Recommendation:** Prepare for accessibility › Fix reading order › Show Order panel: drag
+     the boxes into the order 1 to 5.
+   - **WCAG** 1.3.2 Meaningful Sequence · **Who:** you · **Finished when:** the order panel
+     reads 1 to 5
 
-3. **The route map**
-   - **Finding:** Its alt text is a file name, "IMG_2041.png".
-   - **Recommendation:** Right-click › View Alt Text, and replace it with the draft below, edited
-     to what you mean.
-   - **DRAFT alt text:** "Map of Thursday's walking route through four numbered stations, from
-     Bridge Street junction to the Ferry steps."
-   - **WCAG** 1.1.1 Non-text Content · **Who:** you · **Finished when:** you've confirmed or
-     edited the draft
+*Nothing to list:* pages 14, 16 and 17.
 
-4. **The notes: "The red line is the route"**
-   - **Finding:** The route is carried by colour alone.
-   - **Recommendation:** In the notes, name the stations in order: "From station 1, Bridge
-     Street junction, to station 4, the Ferry steps."
-   - **WCAG** 1.4.1 Use of Color · **Who:** you · **Finished when:** you've made the change
+**3 · Pictures, in order**
 
-**Slide 5, "What to record at each station"**
+After tagging: Prepare for accessibility › Set alternate text. Acrobat shows each picture in
+turn; match it to this list by what it looks like. Tick *Decorative figure*, or paste the draft.
+WCAG 1.1.1 Non-text Content · **Who:** you · **Finished when:** every picture is decorative or
+has alt text you've confirmed.
 
-5. **The slide title**
-   - **Finding:** The title is a text box, so a screen reader announces "Slide 5" and nothing
-     more.
-   - **Recommendation:** Home › Layout › Title Only, move the words into the title placeholder,
-     and delete the text box.
-   - **WCAG** 1.3.1 Info and Relationships · **Who:** you · **Finished when:** you've made the
-     change
+3. **Picture 1, near the cover title:** a cloud of navy and pink dots · **Decorative**
+4. **Picture 2, near "The two AIs":** a large dot cloud joined by a dotted line to a small
+   cluster · **Decorative**
 
-6. **The table**
-   - **Finding:** The first row (Station, Record, Time) reads as column names, and it is not
-     marked as a header row.
-   - **Recommendation:** Click the table › Table Design › tick *Header Row*.
-   - **WCAG** 1.3.1 Info and Relationships · **Who:** you · **Finished when:** you've confirmed
-     the first row holds column names and ticked it
+**4 · Fill-in fields**
 
-…
+Prepare a form › the Fields panel lists every field. Right-click each › Properties › General ›
+Tooltip: type the words printed beside it. WCAG 4.1.2 Name, Role, Value · **Who:** you ·
+**Finished when:** every field has a tooltip.
 
-9. **Try it with a screen reader:** find where to meet on Thursday and what to record at
-   station 3.
+5. **Page 6:** 2 boxes → "The task in one sentence" · "Who asks it now"
+
+**5 · Check your work**
+
+6. **Acrobat's checker:** Prepare for accessibility › Check for accessibility, with *Create
+   accessibility report* ticked. Upload the report, paste it, or send a screenshot, and I'll add
+   anything it found that this list doesn't have.
+
+**6 · Try it with a screen reader**
+
+7. **Task:** find what to bring to the workshop and fill in the first box on page 6.
    - **Who:** someone who uses one · **Finished when:** they complete the task
-
-*Nothing to list:* slides 2, 3 and 7.
 
 *Want this as a spreadsheet? I can make you a CSV file to open in Excel or Google Sheets and
 check items off.*
@@ -291,54 +290,55 @@ check items off.*
 Want me to go through the drafts with you, one at a time?
 ```
 
-The parts, in that order:
+What goes in each part:
 
-1. **Do first**, only if a file is in front of a student soon: the file and why.
-2. **In these files**: the counts in plain words. No score, no percentage, no "only minor
-   issues".
-3. **Fix it once in the template**, only when the same finding is in three or more files: one
-   item saying which files and what to change in the template. Name the template if you can
-   tell.
-4. **One block per file**, the do-first file first, then the rest in the order they were given.
-   The block opens with the file name in bold, *Do first* if it is, and what you read ("slides 1
-   to 7 and their notes", "pages 1 to 24", "all of it, title to 'Accessibility and Support'").
-   For a PDF whose source is unknown, the source line from *Intake* follows; for a PDF with no
-   tags or no text, the PDF passage from the checks file, the one that begins *"A PDF is the end
-   of the line,"* word for word or shorter, with *I* where it says *the tool* unless you can
-   change files, and nothing that implies its structure was improved. Then:
-   - **Entire document**, as a bold line, with what applies to the whole file: title, language,
-     tags, reading order, a long document with no headings.
-   - **Each page or slide that has anything**, in order, as a bold line with its title or first
-     words (*Page 4, "Three windows, one circuit"*; *Slide 5, "What to record at each station"*;
-     for Word, which has no fixed pages, *Under "Course Policies"*). Its items follow.
-   - **At most one try-out**, then the *Nothing to list* line.
-5. **The spreadsheet offer**, in italics, every time. It is not the turn's question.
-6. **One question** that moves the work: going through the drafts, which item to settle first,
-   whether a PDF's source exists, or who owns the files that are not theirs.
+- **Do first**, only if a file is in front of a student soon. **In these files**: the counts in
+  plain words; no score, no percentage, no "only minor issues". If the same finding is in three
+  or more files, a **Fix it once in the template** item comes next, naming the files and the
+  template.
+- **The file line**: the name in bold, *Do first* if it is, and what you read ("pages 1 to 24",
+  "slides 1 to 7 and their notes"). For a PDF whose source is unknown, the source line from
+  *Intake* follows; never when the person has said whether it exists. For a PDF with no tags or
+  no text, the PDF passage from the checks file, the one that begins *"A PDF is the end of the
+  line,"* word for word or shorter, with *I* where it says *the tool* unless you can change
+  files.
+- **1 · Entire document**: title, language, tags, a long document with no headings.
+- **2 · Page by page**: everything made of words, in page order, each page as its own bold line
+  with its number as printed and its heading: link wording, colour or position as the only
+  signal, headings, tables (named by their first row), reading order, another language. Then
+  the *Nothing to list* line.
+- **3 · Pictures, in order**: every picture, chart and drawing in the order it appears, the
+  cover included. Each one line: its number, the nearest heading, what it looks like, then
+  **Decorative** or a **DRAFT alt text:** in quotes. The steps sit once above the list, for the
+  program the person will use (*Where things are fixed*). Page numbers are a hint only: the
+  program finds each picture, and the person matches it by sight.
+- **4 · Fill-in fields**: every box or checkbox meant to be filled in, one line per page: the
+  page, how many, and the printed label for each, which is the name to give it. If the boxes
+  are for pen and paper, say so in one line.
+- **5 · Check your work**: one item, the program's own checker (*Where things are fixed*), and
+  the offer to read its report. This is how nothing is missed: the checker sees what you cannot.
+- **6 · Try it with a screen reader**: one task, named, in the file that matters most.
+- Then the spreadsheet offer, in italics, every time; then **one question** that moves the work:
+  going through the drafts, which item first, whether a PDF's source exists (only if unknown),
+  or who owns the files that are not theirs.
 
-Each item:
+In parts 1, 2 and 5, each item has **Finding**, **Recommendation**, and the WCAG · Who ·
+Finished when line. The Recommendation is the steps, with the real words filled in: the title to
+check, the cells of the header row, the name a link should have. *Who* is a person's name once
+you have one; until then, *you*. Numbers run straight through the reply, across parts and files,
+so item 7 means one thing in the list and in the spreadsheet.
 
-- Opens with **what it is** in bold: *Title*, *The route map*, *The table "The two AIs"*, *The
-  link "click here"*, *The notes: "…"*. With the page line above it, a person finds it without
-  searching.
-- **Finding** is what is wrong, quoting the text where there is some. **Recommendation** is the
-  steps, in the program the person will use, with the real words filled in: the title to type,
-  the cells of the header row, the name a link should have. Take the path from *Where things are
-  fixed*: for a PDF with no source, the Acrobat steps; with a source, the Word or PowerPoint
-  steps, then export again. Then the WCAG · Who · Finished when line. *Who* is a person's name
-  once you have one; until then, *you*.
-- **A picture** carries a **DRAFT alt text:** line when you can see it and it means something,
-  or says it looks decorative, with the steps to mark it so. Where you cannot see it, the item
-  asks what it shows. Every draft is labelled DRAFT; *Drafts and proposals* says how it is
-  confirmed.
-- Numbers run straight through the reply, not from 1 in each file or page, so item 7 means one
-  thing in the list and in the spreadsheet.
-- **A try-out** goes in the one or two files that matter most: *Try it with a screen reader*, with
-  the task named ("find where to meet on Thursday").
-- *Do first* sits on the file's line, not on each item.
+If the list will not fit in one reply, stop at the end of a part, say what is left, and carry
+on when the person says so. Never summarise the rest to make it fit.
 
-If the list will not fit in one reply, stop at the end of a page, say which pages are left, and
-carry on when the person says so. Never summarise the rest to make it fit.
+## A checker's report
+
+When the person uploads, pastes or screenshots a checker's report (Acrobat's accessibility
+report, or Word's or PowerPoint's Check Accessibility pane), read every line of it. Each rule it
+fails, or marks for a manual check, is either an item already on the list (say which number) or
+a new item, numbered after the last one and placed in its part and page. What the checker marks
+as passed is the checker's word, not yours: never repeat it as a verdict. Reply with only the new
+and matched items, then the spreadsheet offer.
 
 ## A spreadsheet
 
@@ -354,7 +354,9 @@ same numbers:
 ```
 
 Every field in straight double quotes; a double quote inside a field is written twice. *Where*
-is the page line and what the item is: `Page 4, the diagram`, `Entire document, title`. Status is
+is the part and what the item is: `Entire document, title`, `Page 4, the diagram`, `Picture 3,
+near "1 · Name it"`, `Fields, page 6`. For pictures and fields, Finding and Recommendation come
+from the steps above that part, with the item's own decision or names added. Status is
 `Open`, or `Check` for an item whose Finding says you could not see the setting. In the file
 only, a do-first item's Recommendation starts *Do first:*, and a draft goes at the end of the
 Recommendation, starting *DRAFT alt text:*. Use plain characters inside the file: straight
@@ -393,7 +395,11 @@ older Acrobat, *All tools › Prepare for accessibility* is *Tools › Accessibi
 | Table header row | Select the first row › Table Layout › Repeat Header Rows | Table Design › tick Header Row | Fix reading order, select the table › Table Editor › select the first row's cells › right-click › Table Cell Properties › Header cell, Scope: Column |
 | Link text | Right-click the link › Edit Hyperlink › Text to display | Same | Edit PDF › retype the words, then check the link still covers them |
 | Reading order | Comes from the source | Review › Check Accessibility › Reading Order pane | Fix reading order › Show Order panel, drag into reading order |
+| Pictures, in turn | Review › Check Accessibility: click each *Missing alternative text* | Same | After tagging, Prepare for accessibility › Set alternate text: it steps through each picture |
+| Fill-in fields | Fields are rare; name each in its Properties | Same | All tools › Prepare a form › Fields panel › right-click › Properties › General › Tooltip |
+| Check your work | Review › Check Accessibility | Same | Prepare for accessibility › Check for accessibility, *Create accessibility report* ticked |
 
+<!-- variant:tool-fix -->
 ## Fixing, with the wcag-tool connected
 
 Only with the wcag-tool connected, and only after the list. First ask the one question the tool
@@ -419,6 +425,7 @@ the second `fix_document` call. Never pass a fix id the owner has not confirmed 
 PDFs: the tool sets the title and the language. Nothing else. An untagged PDF goes back to its
 source, in the words of the PDF passage in `references/checks.md`.
 
+<!-- /variant:tool-fix -->
 ## The report
 
 When the person asks for the report, says they are finished, or asks whether a file is
