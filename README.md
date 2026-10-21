@@ -34,7 +34,9 @@ the bot opens with, the seven knowledge files, and a set of fictional course fil
 
 ## Option 2: the skill
 
-The same file works in Claude, ChatGPT and Gemini: `wcag-triage-skill.zip`. Download it (see
+Claude and ChatGPT use `wcag-triage-skill.zip`. Gemini uses `wcag-triage-gemini.zip`, the same
+skill with its scanner written out as Markdown, because Gemini skills cannot run the script files
+the other zip carries. Download the one you need (see
 [Downloading the files](#downloading-the-files)) and leave it zipped.
 
 ### Claude (claude.ai or the Claude desktop app)
@@ -53,8 +55,8 @@ The same file works in Claude, ChatGPT and Gemini: `wcag-triage-skill.zip`. Down
 
 ### Gemini (in a web browser at gemini.google.com, or the Gemini app for Mac)
 
-1. Create a new skill and choose to upload a file, then pick `wcag-triage-skill.zip`. Uploading is
-   not available in the Gemini phone apps.
+1. Create a new skill and choose to upload a file, then pick `wcag-triage-gemini.zip`. Uploading
+   is not available in the Gemini phone apps.
 
 Then, in any of the three, start a new chat, attach a course file, and type *Triage this file.* The
 assistant asks three short questions first, one at a time, then gives you a table of what it
@@ -208,8 +210,9 @@ You do not need a GitHub account.
 
 1. Go to [the latest release](https://github.com/adamwpryor/wcag-tool/releases/latest) (or click
    **Releases** in the right-hand column of this page and open the newest one).
-2. Under **Assets**, click the file you need: `wcag-triage-skill.zip` for the skill, or
-   `wcag-triage-bot.zip` to build your own copy of the bot.
+2. Under **Assets**, click the file you need: `wcag-triage-skill.zip` for the skill in Claude or
+   ChatGPT, `wcag-triage-gemini.zip` for the skill in Gemini, `wcag-triage-bot.zip` to build your
+   own copy of the bot, or `wcag-triage.md` to paste the instructions into any chat.
 3. To look inside a zip: on Windows, right-click it and choose **Extract All**; on a Mac,
    double-click it. To upload the skill, leave it zipped.
 
@@ -236,7 +239,7 @@ python tools/build_skill.py --check   # confirms the generated reference pages a
 ```
 
 Pushing a version tag (`git tag v0.3.0 && git push origin v0.3.0`) runs
-`.github/workflows/release.yml`, which tests, builds and attaches both zips to that version's
+`.github/workflows/release.yml`, which tests, builds and attaches the downloads to that version's
 release. The command-line tool runs the same engine without an AI assistant:
 
 ```bash

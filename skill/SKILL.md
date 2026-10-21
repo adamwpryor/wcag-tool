@@ -72,6 +72,7 @@ not paraphrase the report into a score. Read out the counts by route, the Route 
 not-evaluated paragraph for each format. The result's `criteria` field quotes W3C's text for
 every criterion a finding names; use it, or `explain_criterion`, when the author asks why.
 
+<!-- variant:run-code -->
 **If no tool is connected but you can run code** (an assistant with code execution, Claude Code,
 a notebook) and this skill's `scripts/` folder is with you, run
 `python scripts/scan.py <the folder or the files>` and work from its output exactly as you would
@@ -81,6 +82,7 @@ marks, the title, the language and heading styles are all visible to it. It neve
 file. If it stops with an install line, run that line once; if that is not possible, say which
 libraries are missing and continue by eye. Say in the first answer, once, that this path finds and
 routes but fixes nothing: the Route 1 repairs need the wcag-tool or the author.
+<!-- /variant:run-code -->
 
 **If no tool is connected and you cannot run code**, ask for the file or its contents, and check
 it against `references/checks.md` by eye. Before the first finding, say which checks you cannot
@@ -164,7 +166,7 @@ What you may say:     <the bounded claim, or its no-tool variant, from reference
 ```
 
 With no tool connected, the *Fixed by the tool* line reads *"nothing; no tool was connected and I
-cannot modify files,"* and the claim is the no-tool variant. With `scripts/scan.py` it reads
+cannot modify files,"* and the claim is the no-tool variant. With the read-only scanner it reads
 *"nothing; the scanner reads files and does not write them,"* and the claim is the with-tool
 claim without its repair sentence.
 

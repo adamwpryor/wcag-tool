@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import io
+import re
 import subprocess
 import sys
 import zipfile
@@ -188,3 +189,76 @@ def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
     # The skill never serves and never needs the MCP SDK.
     assert prefix + "scripts/wcag_tool/server.py" not in names
     assert prefix + "scripts/wcag_tool/cli.py" not in names
+
+
+_PYTHON_BLOCK = re.compile(r"```python\n(.*?)```\n", re.DOTALL)
+
+
+def _gemini_blocks() -> tuple[list[str], str]:
+    """The scanner's save blocks and its scan block, as the Gemini pack carries them."""
+    pages = {
+        name: data.decode("utf-8")
+        for name, data in build_skill.gemini_files(ROOT / "skill")
+        if name.startswith("scanner/")
+    }
+    run = _PYTHON_BLOCK.findall(pages.pop("scanner/run.md"))
+    saves = [block for page in pages.values() for block in _PYTHON_BLOCK.findall(page)]
+    assert len(run) == 1 and len(saves) == len(pages)
+    return saves, run[0]
+
+
+def test_gemini_blocks_scan_like_the_package_and_refuse_a_bad_copy(tmp_path: Path) -> None:
+    from wcag_tool import engine
+    from wcag_tool.report import render_markdown
+
+    work, scripts = tmp_path / "sandbox", tmp_path / "scripts"
+    scripts.mkdir()
+    paths = make_demo_set(work)
+    before = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+    saves, run = _gemini_blocks()
+    # One code step, as run.md asks: every save block, then the scan block.
+    step = scripts / "step.py"
+    step.write_text("\n".join([*saves, run]), encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-I", str(step)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=work,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == render_markdown(engine.scan_many(engine.iter_supported(work))) + "\n"
+    assert {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
+
+    # A later step that finds one part altered refuses to scan, and names the part.
+    altered = work / "wcag_tool" / "alt.py"
+    altered.write_text(altered.read_text(encoding="utf-8") + "# edited\n", encoding="utf-8")
+    again = scripts / "again.py"
+    again.write_text(run, encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-I", str(again)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=work,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "wcag_tool/alt.py" in result.stderr and "| File |" not in result.stdout
+
+
+def test_gemini_pack_carries_the_scanner_as_markdown_only() -> None:
+    files = dict(build_skill.gemini_files(ROOT / "skill"))
+    assert not [n for n in files if n.endswith((".py", ".sh"))]
+    assert not [n for n in files if n.startswith(("scripts/", "tests/")) or n == "TESTING.md"]
+    for wanted in ("references/criteria.md", "rules/wcag21.json", "scanner/run.md"):
+        assert wanted in files, wanted
+    skill = files["SKILL.md"].decode("utf-8")
+    assert "scanner/run.md" in skill
+    assert "scripts/" not in skill and "variant:" not in skill
+    # Everything outside the marked paragraph is SKILL.md word for word.
+    source = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
+    assert build_skill._section(source, "The three rules you never break") in skill
+    assert build_skill._section(source, "If asked for something outside this") in skill
+    assert source.split("<!-- variant:")[0] in skill

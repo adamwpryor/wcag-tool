@@ -1,6 +1,6 @@
 name: release
 
-# Builds the two downloads and attaches them to the GitHub release for a version tag, so
+# Builds the downloads and attaches them to the GitHub release for a version tag, so
 # people who never open the repository's folders can get them from the Releases page.
 # dist/ stays out of git; this is the only place the built files are published.
 
@@ -39,4 +39,6 @@ jobs:
         run: >
           gh release upload "$TAG" --clobber
           dist/wcag-triage-skill.zip
+          dist/wcag-triage-gemini.zip
           dist/wcag-triage-bot.zip
+          dist/wcag-triage.md

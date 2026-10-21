@@ -8,7 +8,7 @@ published so any campus can use it:
 
 | Artifact | Lives in | Built by | Consumed as |
 | :--- | :--- | :--- | :--- |
-| **Skill** (the prose) | `skill/SKILL.md` + `skill/references/` + `skill/scripts/` + `skill/tests/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip (with a read-only scanner and a test kit), README |
+| **Skill** (the prose) | `skill/SKILL.md` + `skill/references/` + `skill/scripts/` + `skill/tests/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip (with a read-only scanner and a test kit), Gemini skill zip, README |
 | **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet) + `bot/instructions.md` (session flow) | By hand, from `dist/wcag-triage-bot/` | Hosted bot, no install, no code, never a tool |
 | **MCP server + CLI** | `src/wcag_tool/` | `pip install -e .` → `wcag-tool` | Local stdio server in any MCP client (no args), or `scan` / `fix` / `demo` subcommands |
 
@@ -28,6 +28,13 @@ never "Route 4"), length limits, and no tool names. Its opening is `bot/greeting
 not rewritten there: an `<!-- include:SKILL.md#... -->` line splices them in word for word at
 build time, and a test fails if the splice is missing or a tool name leaks in. Change the rules
 in `SKILL.md`; change how the bot talks in `bot/instructions.md`.
+
+**Gemini gets its own skill zip** because Gemini skills cannot run `.py` files. The build carries
+the scanner as `scanner/*.md`: one Python block per module or rule file that saves it into the
+sandbox, and a scan block in `run.md` that refuses to run unless every part matches its SHA-256.
+The one SKILL.md paragraph that differs sits between `<!-- variant:run-code -->` markers and is
+replaced from `gemini/run-code.md`. A test runs the blocks as Gemini would and compares the
+output with the package scanner's, so a module change that the blocks miss fails the build.
 
 The origin and the session-facing materials stay in the private `ace-1` repo
 (`output/ace/2026.10/October_Build/`). This repo never carries session logistics, speaker names,

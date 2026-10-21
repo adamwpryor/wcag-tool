@@ -18,6 +18,11 @@ The rules live as data in ``src/wcag_tool/rules/``. The skill's prose lives in
      and ``tests/`` (fictional fixture files, their expected results, and the
      conversation evals). Fixed timestamps, so an unchanged source produces a
      byte-identical archive.
+   * ``dist/<slug>-gemini.zip`` -- the same skill for Gemini, which cannot run the
+     files a skill carries: ``SKILL.md`` with its run-code paragraph taken from
+     ``gemini/``, ``references/``, ``rules/``, and ``scanner/``, Markdown whose
+     Python blocks save the scanner into the code sandbox and then scan, refusing
+     if any part was not copied exactly. No ``scripts/`` and no test kit.
    * ``dist/<slug>-bot/`` -- the BoodleBox pack: ``instructions.md`` for the
      instruction field, built from ``bot/instructions.md`` with the never-break
      rules spliced in from SKILL.md; ``greeting.md`` for the greeting field;
@@ -39,7 +44,10 @@ Example:
 from __future__ import annotations
 
 import argparse
+import ast
+import hashlib
 import io
+import json
 import logging
 import re
 import shutil
@@ -60,6 +68,7 @@ _NAME = re.compile(r"^name:\s*(\S+)\s*$", re.MULTILINE)
 _REFERENCE_LINK = re.compile(r"`references/([A-Za-z0-9_.-]+\.md)`")
 _BLOCK = re.compile(r"(<!-- generated:(\w+) -->\n).*?(<!-- /generated:\2 -->)", re.DOTALL)
 _INCLUDE = re.compile(r"^<!-- include:SKILL\.md#(.+?) -->$", re.MULTILINE)
+_VARIANT = re.compile(r"<!-- variant:([\w-]+) -->\n.*?<!-- /variant:\1 -->\n", re.DOTALL)
 _LEADING_COMMENT = re.compile(r"\A<!--.*?-->\s*", re.DOTALL)
 DEFAULT_SLUG = "wcag-triage"
 
@@ -79,6 +88,10 @@ _VENDORED = (
     "report.py",
     "rules.py",
 )
+# What a scan imports, which is what the Gemini pack carries as Markdown: the vendored set
+# without demo.py and log.py, and the three rule files rules.load() reads.
+_SCANNER = tuple(name for name in _VENDORED if name not in ("demo.py", "log.py"))
+_SCANNER_RULES = ("checks.json", "coverage.json", "wcag21.json")
 # What the BoodleBox bot attaches. wcag21.json is left out: its text is in criteria.md,
 # which a knowledge index splits more cleanly than one long JSON array.
 _BOT_RULES = ("checks.json", "coverage.json")
@@ -297,6 +310,167 @@ def _bot_pack(skill_dir: Path, out: Path) -> list[Path]:
     return written
 
 
+# ----- the Gemini pack ---------------------------------------------------------------------------
+
+_SAVE_BLOCK = """# Saves {target}, one part of the triage scanner. Run it exactly as written.
+from pathlib import Path
+
+_part = Path("{target}")
+_part.parent.mkdir(parents=True, exist_ok=True)
+_part.write_text(r'''{text}''', encoding="utf-8", newline="\\n")
+"""
+
+_SCAN_BLOCK = """# Checks the saved parts, then scans. Read-only: it never writes to a course file.
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+# The course files, as paths this sandbox can open. Empty: every Word, PowerPoint and PDF file
+# under the working folder.
+FILES: list[str] = []
+# True prints the report as data instead of the routed table.
+JSON = False
+
+PARTS = {{
+{parts}
+}}
+
+if sys.version_info < (3, 11):
+    raise RuntimeError(f"The scanner needs Python 3.11 or later, not {{sys.version.split()[0]}}.")
+wrong = [
+    part
+    for part, digest in PARTS.items()
+    if not Path(part).is_file() or hashlib.sha256(Path(part).read_bytes()).hexdigest() != digest
+]
+if wrong:
+    raise RuntimeError(
+        "Missing or not copied exactly: " + ", ".join(wrong) + ". Run the block for each "
+        "again, unchanged, then this one."
+    )
+sys.path.insert(0, str(Path.cwd()))
+for name in [m for m in sys.modules if m == "wcag_tool" or m.startswith("wcag_tool.")]:
+    del sys.modules[name]
+
+from wcag_tool import engine  # noqa: E402
+from wcag_tool.report import render_markdown  # noqa: E402
+
+found: list[Path] = []
+for given in [Path(f) for f in FILES] or [Path.cwd()]:
+    found.extend(engine.iter_supported(given) if given.is_dir() else [given])
+if not found:
+    raise RuntimeError("No Word, PowerPoint or PDF file found. Set FILES to the course files.")
+batch = engine.scan_many(found)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.write(
+    json.dumps(batch.to_dict(), indent=2, ensure_ascii=False) if JSON else render_markdown(batch)
+)
+sys.stdout.write("\\n")
+"""
+
+
+def scanner_parts() -> list[tuple[str, str]]:
+    """The scanner's files as (sandbox path, text), in the form the Gemini pack saves them.
+
+    Line endings are normalised so the fingerprints hold on any checkout. The rule files
+    are minified: the sandbox has to reproduce every character, and indentation is half
+    of coverage.json.
+
+    Returns:
+        Pairs for each module the scan imports, then each rule file it reads.
+    """
+    package = _repo_root() / "src" / "wcag_tool"
+    parts = [
+        (f"wcag_tool/{name}", (package / name).read_text(encoding="utf-8").replace("\r\n", "\n"))
+        for name in _SCANNER
+    ]
+    for name in _SCANNER_RULES:
+        data = json.loads((_rules_dir() / name).read_text(encoding="utf-8"))
+        text = json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n"
+        parts.append((f"wcag_tool/rules/{name}", text))
+    return parts
+
+
+def _save_block(target: str, text: str) -> str:
+    block = _SAVE_BLOCK.format(target=target, text=text)
+    # A raw triple-quoted string cannot hold every text. Prove this one survives the trip.
+    literal = block.split("_part.write_text(", 1)[1].rsplit(", encoding=", 1)[0]
+    if ast.literal_eval(literal) != text:
+        raise ValueError(f"{target} cannot be carried in a raw string literal")
+    return block
+
+
+def _scanner_pages(parts: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """The ``scanner/`` pages: one per part, then ``run.md`` with the scan block."""
+    pages = []
+    for target, text in parts:
+        page = Path(target).name + ".md"
+        body = (
+            f"# {target}\n\nOne part of the triage scanner. See `run.md`. Run this block "
+            f"exactly as written; it saves `{target}` in the sandbox.\n\n"
+            f"```python\n{_save_block(target, text)}```\n"
+        )
+        pages.append((page, body))
+    listed = "\n".join(
+        f"- `{page}` saves `{target}`" for (page, _), (target, _) in zip(pages, parts, strict=True)
+    )
+    digests = "\n".join(
+        f'    "{target}": "{hashlib.sha256(text.encode("utf-8")).hexdigest()}",'
+        for target, text in parts
+    )
+    run = (_repo_root() / "gemini" / "run.md").read_text(encoding="utf-8").strip()
+    run += f"\n\n## The parts\n\n{listed}\n\n## Scan\n\n"
+    run += f"```python\n{_SCAN_BLOCK.format(parts=digests)}```\n"
+    return [*pages, ("run.md", run)]
+
+
+def gemini_skill_md(skill_dir: Path) -> str:
+    """SKILL.md as the Gemini pack carries it: each marked variant replaced from ``gemini/``.
+
+    Args:
+        skill_dir: The folder holding SKILL.md.
+
+    Returns:
+        The SKILL.md text for the Gemini pack.
+
+    Raises:
+        ValueError: If SKILL.md marks no variant.
+    """
+    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    if not _VARIANT.search(text):
+        raise ValueError("SKILL.md marks no variant for the Gemini pack")
+    gemini = _repo_root() / "gemini"
+    return _VARIANT.sub(
+        lambda m: (gemini / f"{m.group(1)}.md").read_text(encoding="utf-8").strip() + "\n", text
+    )
+
+
+def gemini_files(skill_dir: Path) -> list[tuple[str, bytes]]:
+    """Every (archive path, bytes) pair in the Gemini skill zip.
+
+    Gemini skills cannot run the files they carry, so ``scripts/`` and the test kit stay
+    out and the scanner comes as ``scanner/``: Markdown whose blocks save it into the
+    code sandbox, then scan.
+
+    Args:
+        skill_dir: The folder holding SKILL.md.
+
+    Returns:
+        Archive paths relative to the skill folder, with their bytes.
+    """
+    out = [("SKILL.md", gemini_skill_md(skill_dir).encode("utf-8"))]
+    if (skill_dir / "README.md").is_file():
+        out.append(("README.md", (skill_dir / "README.md").read_bytes()))
+    for path in sorted((skill_dir / "references").glob("*.md")):
+        out.append((f"references/{path.name}", path.read_bytes()))
+    for path in sorted(_rules_dir().glob("*.json")):
+        out.append((f"rules/{path.name}", path.read_bytes()))
+    for page, body in _scanner_pages(scanner_parts()):
+        out.append((f"scanner/{page}", body.encode("utf-8")))
+    return out
+
+
 def build(slug: str) -> list[Path]:
     """Sync the references, then build ``dist/`` and return the files written.
 
@@ -324,6 +498,10 @@ def build(slug: str) -> list[Path]:
         fixtures = make_test_set(Path(tmp))
         _zip_skill(name, _skill_files(skill_dir, fixtures), archive)
     written.append(archive)
+
+    gemini_zip = dist / f"{slug}-gemini.zip"
+    _zip_skill(name, gemini_files(skill_dir), gemini_zip)
+    written.append(gemini_zip)
 
     bot_dir = dist / f"{slug}-bot"
     written += _bot_pack(skill_dir, bot_dir)

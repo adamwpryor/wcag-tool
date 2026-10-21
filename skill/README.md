@@ -11,6 +11,7 @@ problem has an owner and the evidence it needs before it can be called done.
 | :--- | :--- |
 | `wcag-triage.md` | **Everything in one file.** The instructions and all five reference pages, joined. Paste it into a chat, or attach it, and say *"triage these files."* |
 | `wcag-triage-skill.zip` | The skill folder, and the most capable way to run it without installing anything else: `SKILL.md`, the reference pages, the rules as JSON, a read-only scanner the assistant can run where it can run code, and a test kit (`TESTING.md`) to check it works before you share it. |
+| `wcag-triage-gemini.zip` | The same skill for Gemini, which cannot run the script files a skill carries. The scanner is in `scanner/` as Markdown; Gemini saves it into its code sandbox and checks every part before it scans. No test kit: its checks run Python scripts. |
 | `wcag-triage-bot/` | The BoodleBox bot: `instructions.md` for the instruction field, and `knowledge/` to attach. |
 | `README.md` | This page. |
 
@@ -24,7 +25,8 @@ tell you which checks it could not do.
 
 **As a skill, where the assistant can run code** (claude.ai with code execution, Claude Code).
 Upload `wcag-triage-skill.zip` as a skill. The assistant then runs `scripts/scan.py` on your files
-and sees what a text paste cannot. It still changes nothing; it finds and routes.
+and sees what a text paste cannot. It still changes nothing; it finds and routes. In Gemini,
+upload `wcag-triage-gemini.zip` instead; it runs the same scanner from Markdown.
 
 **With the wcag-tool connected.** If your assistant takes MCP servers, install `wcag-tool` and
 the same instructions also apply the safe repairs (title and language) to a copy of each file, on
