@@ -9,7 +9,7 @@ published so any campus can use it:
 | Artifact | Lives in | Built by | Consumed as |
 | :--- | :--- | :--- | :--- |
 | **Skill** (the prose) | `skill/SKILL.md` + `skill/references/` + `skill/scripts/` + `skill/tests/` | `python tools/build_skill.py` → `dist/` | Pasteable file, skill zip (with a read-only scanner and a test kit), README |
-| **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet only) | By hand, from `dist/wcag-triage-bot/` | Hosted bot, no install, no code |
+| **BoodleBox bot** | `bot/BOODLEBOX_BOT.md` (build sheet) + `bot/instructions.md` (session flow) | By hand, from `dist/wcag-triage-bot/` | Hosted bot, no install, no code, never a tool |
 | **MCP server + CLI** | `src/wcag_tool/` | `pip install -e .` → `wcag-tool` | Local stdio server in any MCP client (no args), or `scan` / `fix` / `demo` subcommands |
 
 **The rules are data in `src/wcag_tool/rules/`**: `wcag21.json` (W3C's text, extracted by
@@ -20,6 +20,13 @@ whole of `criteria.md`, the Route 5 proposals and the bot's knowledge files are 
 instructions, and the reference pages must say the same thing. If a route or a closure state
 changes, change `skill/references/routes.md`, `src/wcag_tool/findings.py`, `rules.py` and the
 schemas in the same commit. Never hand-edit a `<!-- generated -->` block or `criteria.md`.
+
+**The bot is the one exception to a shared session flow.** BoodleBox never gets an MCP server or
+a code sandbox, so `bot/instructions.md` is written for a bot with no tool: its own opening,
+one-turn intake, triage layout and length limits, and no tool names. The never-break rules are
+not rewritten there: an `<!-- include:SKILL.md#... -->` line splices them in word for word at
+build time, and a test fails if the splice is missing or a tool name leaks in. Change the rules
+in `SKILL.md`; change how the bot talks in `bot/instructions.md`.
 
 The origin and the session-facing materials stay in the private `ace-1` repo
 (`output/ace/2026.10/October_Build/`). This repo never carries session logistics, speaker names,
@@ -78,7 +85,8 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --json
 | `engine.py` | dispatch by extension, `scan`, `scan_many`, `scan_folder`, `fix` |
 | `docx_checks.py` / `docx_fixes.py`, `pptx_checks.py`, `pdf_checks.py` | per-format checks and fixes |
 | `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |
-| `demo.py` | fictional fixture files, shared by tests and the `demo` command |
+| `demo.py` | minimal fictional fixture files, shared by tests, the selftest and the `demo` command |
+| `course_pack.py` | a realistic fictional course pack for testing the bot by hand; built into `dist/wcag-triage-bot/test-files/` |
 | `server.py` | the five MCP tools |
 | `cli.py` | the console entry point |
 

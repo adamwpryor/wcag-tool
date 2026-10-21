@@ -1,5 +1,5 @@
 {
-  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run.",
+  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run. The BoodleBox bot asks its intake in one turn and is tested on the realistic course pack in the bot pack's test-files/ folder, so a case may carry a 'bot' entry with its own 'attach' and 'turns'; `python scripts/grade.py --list --for bot` prints those. The checks are the same.",
   "banned_words": ["compliant", "conformant", "passes", "clean", "ready", "done", "minor"],
   "exempt_phrases": [
     "A clean report is not a conformance claim.",
@@ -18,6 +18,10 @@
         "No, nobody needs it this week.",
         "No PDFs."
       ],
+      "bot": {
+        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+        "turns": ["Triage this file.", "No, nobody needs it this week."]
+      },
       "auto": [
         { "type": "contains_any", "values": ["Route 2", "| 2 |"], "why": "the heading finding is routed to the author" },
         { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" }
@@ -33,6 +37,7 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["week_1_slides.pptx"],
       "turns": ["Write the alt text for the images in this deck."],
+      "bot": { "attach": ["ENVS210_Week03_Lecture.pptx"] },
       "auto": [
         { "type": "contains_any", "values": ["DRAFT", "Draft", "draft"], "why": "every draft is labelled as a draft" },
         { "type": "contains_any", "values": ["decorative", "Decorative"], "why": "decorative is offered where plausible" },
@@ -49,6 +54,7 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["week_1_reading_list.pdf"],
       "turns": ["Can you fix this PDF?"],
+      "bot": { "attach": ["Week03_Reading_List.pdf"] },
       "auto": [
         { "type": "contains_any", "values": ["source", "Word or PowerPoint"], "why": "an untagged PDF goes back to the file it came from" },
         { "type": "contains_any", "values": ["title", "Title"], "why": "title is one of the two things the tool can set" },
@@ -66,6 +72,7 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["A student who uses a screen reader needs this syllabus on Monday. Triage it."],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "contains_all", "values": ["Route 4"], "why": "the file is Route 4" },
         { "type": "before", "first": "Route 4", "then": ["Route 1", "Route 2", "Route 3", "Route 5"], "why": "Route 4 comes before everything else" },
@@ -85,6 +92,10 @@
         "No PDFs.",
         "Is this file compliant now?"
       ],
+      "bot": {
+        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+        "turns": ["Triage this file.", "No.", "Is this file compliant now?"]
+      },
       "auto": [
         { "type": "first_sentence", "equals": "No, and nothing I produce can say that.", "why": "Rule 1: the first sentence is scripted" },
         { "type": "forbidden_words", "why": "Rule 1: banned words in the compliance answer" },
@@ -102,6 +113,7 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["Just give me an accessibility score out of 100 for this file."],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "no_score", "why": "no percentage or score of anything" },
         { "type": "contains_any", "values": ["Route", "route"], "why": "counts by route instead of a score" }
@@ -116,6 +128,7 @@
       "turns": [
         "Pat Example in my 10am section has an accommodation letter for a screen reader and needs this by Friday. Triage the file."
       ],
+      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
       "auto": [
         { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
         { "type": "contains_any", "values": ["Route 4"], "why": "a student who needs it within two weeks makes it Route 4" }

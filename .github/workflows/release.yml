@@ -1,0 +1,42 @@
+name: release
+
+# Builds the two downloads and attaches them to the GitHub release for a version tag, so
+# people who never open the repository's folders can get them from the Releases page.
+# dist/ stays out of git; this is the only place the built files are published.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and attach files to, e.g. v0.3.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+      - run: python tools/build_skill.py
+      - name: Create the release if it does not exist yet
+        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+      - name: Attach the downloads
+        run: >
+          gh release upload "$TAG" --clobber
+          dist/wcag-triage-skill.zip
+          dist/wcag-triage-bot.zip

@@ -1,8 +1,9 @@
 ---
 # Bot specification. Schema follows the Campus Bot Library Interface_Spec §3 (ace-1 repo,
 # output/Tool_Library/Interface_Spec.md). Instructions are NOT duplicated here: the bot's
-# instruction field and knowledge files are dist/wcag-triage-bot/, built from skill/ and
-# src/wcag_tool/rules/ by tools/build_skill.py.
+# session flow is bot/instructions.md, and tools/build_skill.py splices in the never-break
+# rules from skill/SKILL.md and writes dist/wcag-triage-bot/ (instructions, knowledge files
+# from skill/references/ and src/wcag_tool/rules/, and a test course pack).
 name: document-accessibility-triage
 bot_name: Document Accessibility Triage
 one_line: Turns a pile of course files into a routed work queue with owners and closure evidence. Never certifies.
@@ -41,25 +42,33 @@ tags: [wcag, accessibility, ada-title-ii, docx, pptx, pdf, triage]
 
 ## 1. What it does
 
-A faculty member uploads a Word file, a deck or a PDF. The bot asks three intake questions, reads
-what it can see, routes every defect, drafts alt text for the images it is told about, and ends
-with the bounded claim. It is the no-install path to the same rules the MCP tool enforces.
+A faculty member opens the bot and the greeting says in four lines what it does and what to
+upload. When files arrive it reads them at once, asks one intake message (are any of these files
+in front of a student with an accommodation now, or will they need to be within two weeks; for
+each PDF, is the source file still there), then gives
+one routed table for the pile, a short list of things to check in the file by hand with where to
+click, and one question that moves the work. It drafts alt text and headings for the author to
+approve, and ends with the bounded claim. It is the no-install path to the same rules the MCP
+tool enforces.
 
 ```mermaid
 flowchart LR
-    U[Faculty member<br/>uploads files] --> I[Intake<br/>3 questions]
-    I --> R[Route every finding<br/>1–5]
-    R --> D[Draft proposals<br/>alt text, headers]
+    U[Faculty member<br/>uploads files] --> I[One intake turn<br/>student? PDF source?]
+    I --> R[Routed table<br/>+ check-by-hand list]
+    R --> D[Draft proposals<br/>alt text, headings]
     D --> P[Report +<br/>bounded claim]
-    P --> M[(MCP tool<br/>applies Route 1<br/>on their machine)]
 ```
 
-**What the bot cannot do, and says so:** it cannot modify the uploaded file, run code, or reach
-the MCP tool. It cannot see alt text, table header marks or document language in a file it reads
-as text. Those are exactly the things the skill's scanner and the MCP tool read from the file's
-XML, which is why the three ship together. What the bot does have is the whole rule set as
-knowledge, so it can say precisely which criteria it could not check and quote W3C on the ones it
-could.
+**Written for a bot with no tool.** BoodleBox will not get an MCP server or a code sandbox, so the
+bot's session flow (`bot/instructions.md`) is written for that alone: no scanner paths, no fix
+ids, no record fields, and a standing instruction never to talk about tools, setups or its own
+knowledge files. Route 1 findings become *owner sets it*, with the menu path, because nobody
+applies them for the owner.
+
+**What the bot cannot see, and says so once:** read as text, a file hides its alt text, table
+header marks, title and language settings, and whether a bold line carries a Heading style. The
+bot names the specific images, tables and settings it can see exist, as a short *check these in
+the file* list with where to look, instead of guessing or listing them as passed.
 
 ## 2. Bot instructions
 
@@ -69,13 +78,15 @@ Build first:
 python tools/build_skill.py
 ```
 
-Paste **`dist/wcag-triage-bot/instructions.md`** into the Instructions field. It is `SKILL.md`
-with a header telling the bot it has no tool and no code, so it takes the by-eye path every time,
-and naming its knowledge files. The never-break rules are in this text, not only in the knowledge
-files: a knowledge index retrieves pieces, and the refusal must never depend on retrieval.
+Paste **`dist/wcag-triage-bot/instructions.md`** into the Instructions field. It is
+`bot/instructions.md` (the bot's own opening, intake, triage layout, length limits and report)
+with *The three rules you never break* spliced in from `skill/SKILL.md` word for word. The rules
+are in this text, not only in the knowledge files: a knowledge index retrieves pieces, and the
+refusal must never depend on retrieval. A test fails if the splice is missing or if a tool name
+leaks into the bot text.
 
-Do not hand-edit the pasted text. If the rules change, change `skill/` or
-`src/wcag_tool/rules/` and rebuild.
+Do not hand-edit the pasted text. Change the session flow in `bot/instructions.md`, the rules in
+`skill/SKILL.md`, the checks in `src/wcag_tool/rules/`, and rebuild.
 
 ## 3. Files to attach
 
@@ -94,6 +105,8 @@ Attach everything in **`dist/wcag-triage-bot/knowledge/`**:
 `wcag21.json` is not attached: its text is already in `criteria.md`, and Markdown splits into
 cleaner pieces for a knowledge index than one long JSON array.
 
+Do **not** attach `dist/wcag-triage-bot/test-files/`. Those are for testing the bot (§5).
+
 ## 4. Settings
 
 | Setting | Value | Why |
@@ -101,23 +114,37 @@ cleaner pieces for a knowledge index than one long JSON array.
 | Model | Claude Opus 5 (fallback Gemini 3.1 Pro) | The routing is judgment, not retrieval |
 | File upload | On | The whole point |
 | Web browsing | Off | Nothing in the triage needs it, and it invites invented citations |
-| Conversation starter | *"Triage these files."* | Matches the README |
+| Greeting | Paste **`dist/wcag-triage-bot/greeting.md`** | Shown before the first turn, so the instructions do not repeat it |
+| Conversation starters | *"Triage these files."* · *"How does this work?"* | The first matches the README; the second gets a short answer, not the greeting again |
 | Variables | `DEFAULT_LANGUAGE` = en-US · `CAMPUS_ACCESSIBILITY_COORDINATOR_ROLE` = whatever the campus calls it | The bot points out-of-scope questions to a role, never a name |
 
 ## 5. Known-answer tests — run in a fresh session after every change
 
 The cases live in `skill/tests/evals.json`, shared with the skill and the MCP tool, so all three
 are held to the same answers. Eight apply to the bot (KAT-1 to KAT-8; KAT-9 and KAT-10 need the
-MCP tool). The fixture files are in the skill zip's `tests/fixtures/`, or run
-`wcag-tool demo <folder>`.
+MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
+built by `src/wcag_tool/course_pack.py`. It reads like a real course, so the bot has to find
+the defects among content that is fine:
+
+| File | What is in it |
+| :--- | :--- |
+| `ENVS210_Syllabus_Fall2026.docx` | Three pages. Bolded title and *Course Policies* lines, a 1 → 3 heading skip, an empty heading, three tables with no header row (one is a label/value table whose first row is *not* a header), a chart with no alt text, *click here*, *here* and a bare URL, due dates marked only in red. No title or language |
+| `ENVS210_Week03_Lecture.pptx` | Seven slides with speaker notes. A logo with no alt text (decorative), a map whose alt text is `IMG_2041.png`, a chart with Office's auto-description and no legend, a slide titled with a text box, a table with no header row |
+| `Field_Journal_Guidelines.docx` | A long handout with title, language and a properly described image, but ALL CAPS lines instead of headings |
+| `Week03_Reading_List.pdf` | Two pages of real text, untagged, no title or language |
+| `Course_Reader_Ch3_scan.pdf` | Two scanned book pages: readable to the eye, no text for a screen reader |
+
+The scanner's minimal fixtures (skill zip `tests/fixtures/`, or `wcag-tool demo <folder>`) stay
+as they are; the unit tests and the live demo's expected values depend on them.
 
 ```bash
-python skill/scripts/grade.py --list                 # the cases, what to attach, what to type
+python skill/scripts/grade.py --list --for bot       # the bot's cases, files and turns
 python skill/scripts/grade.py replies/KAT-*.txt      # score the saved last replies
 ```
 
 | # | Ask | Must happen |
 | :-: | :--- | :--- |
+| 0 | Open the bot, read the greeting, then say "how does this work?" | Under 80 words, not the greeting again; no mention of tools, files or instructions |
 | 1 | Upload a Word file with a bold line used as a heading | Routed 2, proposal offered, not asserted as a heading |
 | 2 | Upload a deck and say "write the alt text" | Drafts labelled DRAFT, with a decorative option; asks what the images show if it cannot see them |
 | 3 | Upload a PDF and ask "can you fix this" | Says title and language are fixable; says tagging is not; asks for the source file |
@@ -128,7 +155,9 @@ python skill/scripts/grade.py replies/KAT-*.txt      # score the saved last repl
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
 
 Run each case three times. Number 5 must pass every run: it is the test everyone skips and the
-one that catches the dangerous failure.
+one that catches the dangerous failure. Case 0 is not in the grader; read it. If a question turn
+runs past about 80 words, the length rules in `bot/instructions.md` need tightening for that
+model.
 
 ## 6. Handoff contract
 
@@ -145,7 +174,7 @@ table to the tool and apply exactly the confirmed fixes.
 
 ## 8. Port it
 
-The instruction file is tool-agnostic. The same `instructions.md` plus `knowledge/` is a Claude
-Project's instructions and files, a Gem's instructions and files, or a Custom GPT's instructions
-and knowledge. For a single paste into a fresh chat, use `dist/wcag-triage.md`, which joins the
+The instruction file is platform-agnostic and assumes no tool. The same `instructions.md` plus
+`knowledge/` is a Claude Project's instructions and files, a Gem's instructions and files, or a
+Custom GPT's instructions and knowledge. For a single paste into a fresh chat, use `dist/wcag-triage.md`, which joins the
 instructions and the reference pages into one file.

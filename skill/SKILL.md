@@ -55,9 +55,9 @@ is waiting on a person, and what was not evaluated.
 Ask these one per turn, and wait for each answer.
 
 1. *What files are we looking at — roughly how many, and in which formats (Word, PowerPoint, PDF)?*
-2. *Is any of this in front of a currently enrolled student with an accommodation right now, or
-   due to a student within two weeks?* If yes, that file is Route 4 and goes first. Do not ask who
-   the student is; you never need a name.
+2. *Are any of these files in front of a student with an accommodation now, or will they need to
+   be in front of a student within two weeks?* If yes, that file is Route 4 and goes first. Do
+   not ask who the student is; you never need a name.
 3. *For each PDF, do you still have the Word or PowerPoint file it came from?* A PDF with a source
    is fixed at the source and re-exported. A PDF without one is a different and slower job, and
    you say so now rather than later.

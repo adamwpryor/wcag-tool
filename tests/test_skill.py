@@ -80,6 +80,27 @@ def test_grader_scores_known_replies(tmp_path: Path, case: str, reply: str, pass
     assert (result.returncode == 0) is passes, result.stdout
 
 
+def test_bot_instructions_carry_the_skill_rules_word_for_word() -> None:
+    skill_text = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
+    built = build_skill.bot_instructions(ROOT / "skill", ROOT / "bot")
+    assert build_skill._section(skill_text, "The three rules you never break") in built
+    assert "include:SKILL.md" not in built
+    # The bot never has a tool, so neither its instructions nor its greeting mention one.
+    greeting = (ROOT / "bot" / "greeting.md").read_text(encoding="utf-8")
+    for text in (built, greeting):
+        for name in ("scan_document", "scan_folder", "fix_document", "explain_criterion"):
+            assert name not in text, name
+        assert "scan.py" not in text and "MCP" not in text
+
+
+def test_grade_lists_the_bot_cases_with_the_course_pack() -> None:
+    result = _run(SCRIPTS / "grade.py", "--list", "--for", "bot")
+    assert result.returncode == 0, result.stderr
+    assert "ENVS210_Syllabus_Fall2026.docx" in result.stdout
+    assert "syllabus_section_01.docx" not in result.stdout
+    assert "KAT-9" not in result.stdout and "KAT-10" not in result.stdout
+
+
 def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
     skill_dir = ROOT / "skill"
     fixtures = build_skill.make_test_set(tmp_path / "fixtures")

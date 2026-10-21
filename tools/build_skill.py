@@ -19,7 +19,12 @@ The rules live as data in ``src/wcag_tool/rules/``. The skill's prose lives in
      conversation evals). Fixed timestamps, so an unchanged source produces a
      byte-identical archive.
    * ``dist/<slug>-bot/`` -- the BoodleBox pack: ``instructions.md`` for the
-     instruction field and ``knowledge/`` to attach. No scripts; the bot runs none.
+     instruction field, built from ``bot/instructions.md`` with the never-break
+     rules spliced in from SKILL.md; ``greeting.md`` for the greeting field;
+     ``knowledge/`` to attach; and
+     ``test-files/``, a realistic fictional course pack for testing it by hand.
+     No scripts; the bot runs none.
+     ``dist/<slug>-bot.zip`` is the same folder as one download for a release.
    * ``dist/README.md`` -- copied from ``skill/README.md``.
 
 Lifted from the ACE/LAC programme's ``lac/tools/build_skills.py`` and generalized
@@ -44,6 +49,7 @@ import zipfile
 from pathlib import Path
 
 from wcag_tool import rules
+from wcag_tool.course_pack import make_course_pack
 from wcag_tool.demo import make_test_set
 
 logger = logging.getLogger(__name__)
@@ -53,6 +59,8 @@ _FRONT_MATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
 _NAME = re.compile(r"^name:\s*(\S+)\s*$", re.MULTILINE)
 _REFERENCE_LINK = re.compile(r"`references/([A-Za-z0-9_.-]+\.md)`")
 _BLOCK = re.compile(r"(<!-- generated:(\w+) -->\n).*?(<!-- /generated:\2 -->)", re.DOTALL)
+_INCLUDE = re.compile(r"^<!-- include:SKILL\.md#(.+?) -->$", re.MULTILINE)
+_LEADING_COMMENT = re.compile(r"\A<!--.*?-->\s*", re.DOTALL)
 DEFAULT_SLUG = "wcag-triage"
 
 # The package modules the skill's scripts need. server.py and cli.py stay out: they
@@ -221,33 +229,71 @@ def _zip_skill(name: str, files: list[tuple[str, bytes]], out: Path) -> None:
             archive.writestr(info, data)
 
 
+def _section(markdown: str, heading: str) -> str:
+    """The ``## heading`` section of a Markdown page, up to the next ``## `` heading."""
+    match = re.search(
+        rf"^## {re.escape(heading)}\n.*?(?=^## |\Z)", markdown, re.MULTILINE | re.DOTALL
+    )
+    if match is None:
+        raise ValueError(f"SKILL.md has no section '## {heading}'")
+    return match.group(0).strip()
+
+
+def bot_instructions(skill_dir: Path, bot_dir: Path) -> str:
+    """The bot's instruction text: its own session flow, with SKILL.md's rules spliced in.
+
+    The bot never has a tool, so its session flow is written for that alone in
+    ``bot/instructions.md``. The rules it must never break are not rewritten there:
+    each ``<!-- include:SKILL.md#<heading> -->`` line is replaced by that section of
+    SKILL.md word for word, so the skill and the bot cannot drift apart on them.
+
+    Args:
+        skill_dir: The folder holding SKILL.md.
+        bot_dir: The folder holding the bot's instructions.md.
+
+    Returns:
+        The text to paste into the bot's Instructions field.
+
+    Raises:
+        ValueError: If the bot text includes no section, or names one SKILL.md lacks.
+    """
+    skill_text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    source = (bot_dir / "instructions.md").read_text(encoding="utf-8")
+    if not _INCLUDE.search(source):
+        raise ValueError("bot/instructions.md must include the never-break rules from SKILL.md")
+    body = _INCLUDE.sub(lambda m: _section(skill_text, m.group(1)), source)
+    body = _LEADING_COMMENT.sub("", body, count=1).strip()
+    header = (
+        "<!-- BoodleBox bot instructions, built from bot/instructions.md and skill/SKILL.md. "
+        "Do not edit here. -->\n\n"
+    )
+    return header + body + "\n"
+
+
 def _bot_pack(skill_dir: Path, out: Path) -> list[Path]:
-    """Write the BoodleBox instructions and knowledge files."""
+    """Write the BoodleBox instructions, knowledge files and test files."""
     if out.exists():
         shutil.rmtree(out)
     knowledge = out / "knowledge"
     knowledge.mkdir(parents=True)
     skill_text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
-    body = _FRONT_MATTER.sub("", skill_text, count=1).strip()
-    attached = [p.name for p in _reference_order(skill_text, skill_dir / "references")]
-    header = (
-        "<!-- BoodleBox bot instructions, built from skill/SKILL.md. Do not edit here. -->\n\n"
-        "You are running as a BoodleBox bot. No tool is connected and you cannot run code, so "
-        "every session takes the last path in §2, *no tool connected and you cannot run code*, "
-        "and the report uses the no-tool claim. Your knowledge files are the "
-        "pages this text calls `references/...`: "
-        + ", ".join(f"`{n}`" for n in attached)
-        + ", plus `checks.json` and `coverage.json`, the same rules as data. When a page and "
-        "a JSON file seem to differ, the JSON is right; say so.\n\n"
-    )
     written = [out / "instructions.md"]
-    written[0].write_text(header + body + "\n", encoding="utf-8", newline="\n")
+    written[0].write_text(
+        bot_instructions(skill_dir, _repo_root() / "bot"), encoding="utf-8", newline="\n"
+    )
+    # The platform shows the greeting before the first turn, so it is not in the instructions.
+    shutil.copyfile(_repo_root() / "bot" / "greeting.md", out / "greeting.md")
+    written.append(out / "greeting.md")
     for page in _reference_order(skill_text, skill_dir / "references"):
         shutil.copyfile(page, knowledge / page.name)
         written.append(knowledge / page.name)
     for name in _BOT_RULES:
         shutil.copyfile(_rules_dir() / name, knowledge / name)
         written.append(knowledge / name)
+    for path in make_course_pack(out / "test-files"):
+        if path.suffix in (".docx", ".pptx"):
+            path.write_bytes(_stable_office(path.read_bytes()))
+        written.append(path)
     return written
 
 
@@ -279,7 +325,17 @@ def build(slug: str) -> list[Path]:
         _zip_skill(name, _skill_files(skill_dir, fixtures), archive)
     written.append(archive)
 
-    written += _bot_pack(skill_dir, dist / f"{slug}-bot")
+    bot_dir = dist / f"{slug}-bot"
+    written += _bot_pack(skill_dir, bot_dir)
+    # One download for the release page: the same folder, zipped.
+    bot_zip = dist / f"{slug}-bot.zip"
+    bot_files = [
+        (p.relative_to(bot_dir).as_posix(), p.read_bytes())
+        for p in sorted(bot_dir.rglob("*"))
+        if p.is_file()
+    ]
+    _zip_skill(bot_dir.name, bot_files, bot_zip)
+    written.append(bot_zip)
 
     readme = skill_dir / "README.md"
     if readme.is_file():
