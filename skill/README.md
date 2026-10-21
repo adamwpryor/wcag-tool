@@ -19,9 +19,10 @@ problem has an owner and the evidence it needs before it can be called done.
 
 **In a chat assistant.** Claude, ChatGPT, Gemini, or whichever you have. Start a new conversation,
 attach `wcag-triage.md` or paste its contents, and type: *"Triage these files."* It asks only
-what you have not already told it, reads every page, and gives you one list, file by file and
-page by page. Read as text, a file hides some of what matters (alt text, header rows, the
-language setting); the assistant lists those as things to check in the file, with where to click.
+what you have not already told it, reads every page, and gives you one list to work through:
+the whole document first, then page by page, each item with the clicks to make and draft alt
+text where a picture needs it. Read as text, a file hides some of what matters (alt text, header
+rows, the language setting); those items say so and tell you how to check.
 
 **As a skill, where the assistant can run code** (claude.ai with code execution, Claude Code).
 Upload `wcag-triage-skill.zip` as a skill. The assistant then runs `scripts/scan.py` on your files

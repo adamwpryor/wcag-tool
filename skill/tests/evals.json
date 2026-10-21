@@ -27,7 +27,7 @@
         { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are working, not the person's vocabulary" }
       ],
       "human": [
-        "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or listed under Check these in the file.",
+        "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question; it is not applied.",
         "The file name is in bold, then numbered items that each open with where the problem is, then Finding and Recommendation as bold-labelled sub-bullets, then WCAG, Who and Finished when. It renders as formatted text, not a code block or a routed table."
       ]
     },
@@ -187,7 +187,7 @@
       "human": [
         "A downloadable file appears, not only text to copy. If the reply mentions a file, one is there to click; where none could be made, the reply says so and gives the CSV in a code block.",
         "Opened in Excel or Google Sheets, every row has nine columns: #, File, Where, Finding, Recommendation, WCAG, Who, Finished when, Status.",
-        "One row per item in the list, with the same numbers in the same order, plus one row per check-by-hand place with Status 'Check in the file'."
+        "One row per item in the list, with the same numbers in the same order. Status is Open, or Check where the finding says a setting could not be seen."
       ]
     },
     {
@@ -224,7 +224,26 @@
         "Items are grouped by file and run in slide or section order, and each opens with where it is, so the first answer is the whole pass.",
         "The red route line (slide 4) and the blue-and-orange chart (slide 6) are both items; so are the journal's 'right-hand column' and 'shown below'. The journal picture's alt text ('on the left', 'on the right') is not flagged: it describes the picture, it is not an instruction.",
         "The journal's capitalised lines (WHAT TO BRING, BEFORE YOU START...) are offered as possible headings for the author to confirm, not applied.",
+        "Every picture and table is an item on its page, not in a separate list; no slide with a picture or table is on the Nothing to list line.",
         "Each file's block says what was read, and every slide either has an item or is on the Nothing to list line."
+      ]
+    },
+    {
+      "id": "KAT-14",
+      "title": "A PDF gets the whole page-by-page work order in the first reply",
+      "applies_to": ["skill", "bot", "mcp"],
+      "attach": ["week_1_reading_list.pdf"],
+      "turns": ["Students get this Thursday. Triage it."],
+      "bot": { "attach": ["Week03_Reading_List.pdf"] },
+      "auto": [
+        { "type": "contains_all", "values": ["Do first", "Entire document", "Page 1", "Finding:", "Recommendation:"], "why": "the first reply is the whole list: the document, then page by page; the PDF-source question never holds it up" },
+        { "type": "before", "first": "Do first", "then": ["Finding:", "?"], "why": "do-first comes before any item or question" },
+        { "type": "not_contains", "values": ["Check these in the file", "is untagged"], "why": "every item sits on its page, and a setting that could not be read is never stated as fact" }
+      ],
+      "human": [
+        "Title, language and tags sit under Entire document; then each page with anything on it has its own bold line and items.",
+        "Each Recommendation is Acrobat steps with the real words filled in (the title to type, the link's new name), and says to fix the source instead if it still exists.",
+        "If the source question is asked, it is the closing question, after the list."
       ]
     }
   ]

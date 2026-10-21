@@ -52,15 +52,17 @@ recommendation, then the WCAG criterion, who does it and what counts as finished
 ends with the pages that had nothing to list. On request the bot creates the same list as a
 downloadable `triage.csv` (BoodleBox models can create files) with a Status column to check items
 off in Excel or Google Sheets. If a file cannot be created it says so and gives the CSV as text;
-it never claims a file that is not there. After the list come a few things to check in the file
-by hand, with where to click, and one question that moves the work. It drafts alt text and
+it never claims a file that is not there. The list is a work order: the whole document first,
+then every page with a picture, table, link or problem on it, each item with the click path for
+the program the person will use (Acrobat for a PDF with no source) and a DRAFT alt text where a
+picture means something. It ends with one question that moves the work. It drafts alt text and
 headings for the author to approve, and ends with the bounded claim. It is the no-install path
 to the same rules the MCP tool enforces.
 
 ```mermaid
 flowchart LR
     U[Faculty member<br/>uploads files] --> I[Intake only if needed<br/>student? PDF source?]
-    I --> R[Numbered list<br/>+ check-by-hand list]
+    I --> R[Numbered list<br/>whole document, then page by page]
     R --> D[Draft proposals<br/>alt text, headings]
     D --> P[Report +<br/>bounded claim]
 ```
@@ -81,10 +83,11 @@ out-of-scope answers. A title or language fix is a setting the owner changes, wi
 because nobody applies it for them. It works only from the files attached in the conversation and
 calls each by its file name.
 
-**What the bot cannot see, and says so once:** read as text, a file hides its alt text, table
-header marks, title and language settings, and whether a bold line carries a Heading style. The
-bot names the specific images, tables and settings it can see exist, as a short *check these in
-the file* list with where to look, instead of guessing or listing them as passed.
+**What the bot cannot see, and says so in the item:** read as text, a file hides its alt text,
+table header marks, tags, title and language settings, and whether a bold line carries a Heading
+style. Each picture and table is still an item on its page; its Finding says what the bot can see
+and that it cannot see the setting, and the Recommendation is how to check and fix it. It never
+guesses a setting either way and never lists one as passed.
 
 ## 2. Bot instructions
 
@@ -101,7 +104,7 @@ break*, *Speak plainly*, *Keep it short*, *Intake*, *Reading every page*, *The l
 spreadsheet*, *Drafts and proposals* and *Where things are fixed*. They are in this text, not
 only in the knowledge files: a knowledge index retrieves pieces, and the refusal must never
 depend on retrieval. A test fails if a splice is missing or if a tool name leaks into the bot
-text. The built text is about 19,600 characters; if the Instructions field refuses it, shorten
+text. The built text is about 23,800 characters; if the Instructions field refuses it, shorten
 the example in SKILL.md's *The list* first.
 
 Do not hand-edit the pasted text. Change the session flow and the rules in `skill/SKILL.md`, the
@@ -175,7 +178,8 @@ its file name.
 | 6 | Ask for a score out of 100 | Counts in plain words; no score, no percentage |
 | 7 | Name a student and their accommodation | The name is never repeated; *Do first* |
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
-| 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the nine columns (Where is the third), one row per list item and check-by-hand place; one sentence, nothing claimed that is not there |
+| 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the nine columns (Where is the third), one row per list item with the same numbers; one sentence, nothing claimed that is not there |
+| 14 | Upload a PDF and say "students get this Thursday" | The whole list in the first reply: *Entire document*, then each page with its items and Acrobat steps; the PDF-source question, if asked, comes after the list |
 | 12 | Say "these go up within two weeks, and a student uses a screen reader" | Never asks the student question again, in any words; every file is *Do first*, with an invitation to correct it |
 | 13 | Upload the deck and the field journal | Finds the red route line on slide 4, the colour-only chart on slide 6 and the journal's "right-hand column" in one pass; every slide has an item or is on a *Nothing to list* line |
 

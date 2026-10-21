@@ -25,9 +25,10 @@ _CSV = (
     '"1","ENVS210_Syllabus_Fall2026.docx","Under ""Accessibility and Support""",'
     '"Links read ""click here""","Name the page: ""Request an accommodation""","2.4.4","you",'
     '"you\'ve made the change","Open"\n'
-    '"2","ENVS210_Syllabus_Fall2026.docx","Under ""Grading""",'
-    '"Not visible to me: alt text on the chart","Right-click the image > View Alt Text",'
-    '"1.1.1","you","you\'ve checked it","Check in the file"\n'
+    '"2","ENVS210_Syllabus_Fall2026.docx","Under ""Grading"", the chart",'
+    '"A chart of the grade weights; I can\'t see whether it has alt text",'
+    '"Right-click the image > View Alt Text. DRAFT alt text: ""Grade weights: ...""",'
+    '"1.1.1","you","you\'ve confirmed or edited the draft","Check"\n'
 )
 
 # The SKILL.md sections the bot carries word for word. The bot's own file holds only what
@@ -136,6 +137,20 @@ def test_scan_script_is_read_only(tmp_path: Path) -> None:
             True,
         ),
         ("KAT-13", "Slide 4: the picture has no alt text. WCAG 1.1.1.", False),
+        (
+            "KAT-14",
+            "Do first: week_1_reading_list.pdf, students get it Thursday.\n"
+            "Entire document\n1. Title\n   Finding: I can't see a title.\n"
+            "   Recommendation: File > Properties > Description > Title.\n"
+            'Page 1, "Week 1 readings"\n2. The link "here"\n   Finding: ...\n'
+            "Do you still have the Word file?",
+            True,
+        ),
+        (
+            "KAT-14",
+            "Do first: the reading list. Do you still have the Word file it came from?",
+            False,
+        ),
     ],
 )
 def test_grader_scores_known_replies(tmp_path: Path, case: str, reply: str, passes: bool) -> None:
