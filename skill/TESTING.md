@@ -27,7 +27,7 @@ Nothing in `tests/fixtures/` is a real course, a real person or a real instituti
 python scripts/grade.py --list
 ```
 
-lists ten short cases. For each one:
+lists the short cases and which version each one applies to. For each one:
 
 1. Start a **fresh** conversation with the skill loaded.
 2. Attach the fixture the case names, from `tests/fixtures/`.
@@ -49,8 +49,11 @@ is the one that matters: a skill that says *compliant* once in three runs will s
 For the rest, three of three is the target; two of three means a sentence in `SKILL.md` needs
 work, and the failing reply shows which.
 
-**Which cases apply.** `--list` shows `[skill, bot, mcp]` beside each case. KAT-9 and KAT-10 need
-the wcag-tool MCP server connected; skip them otherwise.
+**Which cases apply.** `--list` shows `[skill, bot, mcp]` beside each case, and `--list --for bot`
+(or `skill`, or `mcp`) shows only the cases for that version. Some cases need the wcag-tool MCP
+server connected, and some are for the BoodleBox bot alone; skip the ones that do not match what
+you are testing. When grading the bot's replies, add `--for bot`, because a few cases check the
+bot's plain-words answer differently.
 
 ## When you change something
 

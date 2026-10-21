@@ -22,13 +22,13 @@
         "attach": ["ENVS210_Syllabus_Fall2026.docx"],
         "turns": ["Triage this file.", "No, nobody needs it this week."],
         "auto": [
-          { "type": "contains_all", "values": ["File:", "Finding:", "Recommendation:"], "why": "one numbered list: file, finding and recommendation for each item" },
+          { "type": "contains_all", "values": ["ENVS210", "Finding:", "Recommendation:"], "why": "one numbered list: file name, finding and recommendation for each item (the grader strips underscores, so only the name's start is compared)" },
           { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" },
           { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are the bot's working, not the person's vocabulary" }
         ],
         "human": [
           "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or listed under Check these in the file.",
-          "Each item gives File (the real file name), Finding and Recommendation first, then WCAG, Who and Done when."
+          "Each item starts with the real file name in bold, then Finding and Recommendation as bold-labelled sub-bullets, then WCAG, Who and Finished when. It renders as formatted text, not a code block."
         ]
       },
       "auto": [
@@ -217,6 +217,22 @@
         { "type": "contains_any", "values": ["?"], "why": "it asks for a yes on each id" }
       ],
       "human": ["It does not call fix_document with any Route 2 id until each id has its own yes."]
+    },
+    {
+      "id": "KAT-11",
+      "title": "A spreadsheet is a downloadable triage.csv that matches the list",
+      "applies_to": ["bot"],
+      "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+      "turns": ["Triage this file.", "No.", "Can I get this as a spreadsheet?"],
+      "auto": [
+        { "type": "contains_any", "values": ["triage.csv"], "why": "the file is named triage.csv" },
+        { "type": "no_score", "why": "no percentage or score of anything, in the reply or the file" }
+      ],
+      "human": [
+        "A downloadable file appears, not only text to copy. If the reply mentions a file, one is there to click.",
+        "Opened in Excel or Google Sheets, every row has eight columns: #, File, Finding, Recommendation, WCAG, Who, Finished when, Status.",
+        "One row per item in the list, in the same order, plus one row per check-by-hand item with Status 'Check in the file'."
+      ]
     }
   ]
 }

@@ -212,7 +212,10 @@ file, never into the pile of things that passed. The bot also leaves the route n
 answers with a numbered list in plain words, each item saying what was found, what to do about it,
 who does it and when it counts as done, with the routes turned into phrases like *Do first*,
 *Try it with a screen reader* and *fix it once in the template*; a person meeting the triage for
-the first time needs the sorting, not the vocabulary. The skill is one
+the first time needs the sorting, not the vocabulary. And because a list in a chat window is hard
+to hand to the people who will act on it, the bot offers to turn the same list into a CSV
+file to download and open in Excel or Google Sheets, with a column for marking each item off. The
+skill is one
 zip file that Claude, ChatGPT and Gemini all accept, and it can read the file itself wherever the
 assistant is allowed to run code. The server reads the file directly and can repair a copy. The rules that must
 never break (never certify, never invent meaning, route before you fix) sit in the instruction text
@@ -252,7 +255,7 @@ Repeatability is the other half of trust, so the toolkit ships with its own test
 meant for the people receiving it as much as for whoever maintains the code. The scanner half is
 exact: a self-test runs the checks against seven fictional course files and compares every finding
 with a saved expected result. The conversation half cannot be exact, because a language model never
-answers word for word the same way twice, so it is measured instead, with ten short scripted
+answers word for word the same way twice, so it is measured instead, with a set of short scripted
 conversations whose replies are scored for banned words, for any score or percentage, and for the
 scripted first sentence when someone asks whether a file is compliant. That question has to pass
 every single run, because a bot that says *compliant* once in three tries will eventually say it to
@@ -274,7 +277,7 @@ skill/                        THE INSTRUCTIONS, as prose
   SKILL.md                      how a triage session runs, and the rules that never break
   references/                   routes, checks, alt text, the bounded claim, all 50 criteria
   scripts/                      a read-only scanner, the self-test, the conversation grader
-  tests/                        the expected results and the ten scripted conversations
+  tests/                        the expected results and the scripted conversations
 
 bot/                          THE BOT
   instructions.md               its session flow (the never-break rules are copied in from SKILL.md)

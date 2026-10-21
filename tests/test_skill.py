@@ -1,6 +1,8 @@
 """The skill's own kit: generated pages are current, the self-test passes, the grader grades."""
 
+import csv
 import hashlib
+import io
 import subprocess
 import sys
 import zipfile
@@ -15,6 +17,23 @@ SCRIPTS = ROOT / "skill" / "scripts"
 sys.path.insert(0, str(ROOT / "tools"))
 
 import build_skill  # noqa: E402
+
+# The bot's spreadsheet, as bot/instructions.md specifies it.
+_CSV = (
+    '"#","File","Finding","Recommendation","WCAG","Who","Finished when","Status"\n'
+    '"1","ENVS210_Syllabus_Fall2026.docx","Links read ""click here""",'
+    '"Name the page: ""Request an accommodation""","2.4.4","you",'
+    '"you\'ve made the change","Open"\n'
+    '"2","ENVS210_Syllabus_Fall2026.docx","Not visible to me: alt text on the chart",'
+    '"Right-click the image > View Alt Text","1.1.1","you","you\'ve checked it",'
+    '"Check in the file"\n'
+)
+
+
+def test_bot_spreadsheet_format_parses_into_eight_columns() -> None:
+    rows = list(csv.reader(io.StringIO(_CSV)))
+    assert all(len(row) == 8 for row in rows)
+    assert rows[1][2] == 'Links read "click here"'
 
 
 def _run(*args: str | Path) -> subprocess.CompletedProcess[str]:
@@ -107,8 +126,20 @@ def test_bot_instructions_carry_the_skill_rules_word_for_word() -> None:
             True,
         ),
         ("KAT-4", "Route 4: the syllabus goes first. Finding: links.", False),
-        ("KAT-1", "1. File: a.docx\n   Finding: x\n   Recommendation: y", True),
-        ("KAT-1", "1. File: a.docx\n   Finding: x\n   Recommendation: y\n   Route 2", False),
+        (
+            "KAT-1",
+            "1. **`ENVS210_Syllabus_Fall2026.docx`**\n   - **Finding:** x\n"
+            "   - **Recommendation:** y",
+            True,
+        ),
+        (
+            "KAT-1",
+            "1. **`ENVS210_Syllabus_Fall2026.docx`**\n   - **Finding:** x\n"
+            "   - **Recommendation:** y · Route 2",
+            False,
+        ),
+        ("KAT-11", "Here's triage.csv: open it in Excel or Google Sheets.", True),
+        ("KAT-11", "Here's your spreadsheet, about 60% complete.", False),
     ],
 )
 def test_grader_scores_bot_replies_in_plain_words(

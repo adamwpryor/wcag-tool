@@ -47,7 +47,10 @@ whether any of them is in front of a student with an accommodation now or will b
 weeks. When files arrive the bot reads them at once and asks only what is still unknown (usually
 nothing, or whether each PDF's source file still exists). Then it gives one numbered list for
 the pile: each item names the file, the finding and the recommendation, then the WCAG criterion,
-who does it and what counts as finished. After the list come a few things to check in the file
+who does it and what counts as finished. On request the bot creates the same list as a
+downloadable `triage.csv` (BoodleBox models can create files) with a Status column to check items
+off in Excel or Google Sheets. If a file cannot be created it says so and gives the CSV as text;
+it never claims a file that is not there. After the list come a few things to check in the file
 by hand, with where to click, and one question that moves the work. It drafts alt text and
 headings for the author to approve, and ends with the bounded claim. It is the no-install path
 to the same rules the MCP tool enforces.
@@ -62,7 +65,7 @@ flowchart LR
 
 **Plain words, not routes.** The five routes and four closure states still decide the bot's
 ordering and who acts, but they are its working, not the reader's vocabulary. A faculty member
-fixing their own files reads *Do first* (Route 4), *Who: you · Done when: you've confirmed it*
+fixing their own files reads *Do first* (Route 4), *Who: you · Finished when: you've confirmed it*
 (Route 2), *Try it with a screen reader* (Route 3) and *fix it once in the template* (Route 5),
 never a route number or a closure-state name. The skill and the MCP tool keep the route numbers:
 their readers are the people who run triage across a campus.
@@ -130,8 +133,8 @@ Do **not** attach `dist/wcag-triage-bot/test-files/`. Those are for testing the 
 ## 5. Known-answer tests — run in a fresh session after every change
 
 The cases live in `skill/tests/evals.json`, shared with the skill and the MCP tool, so all three
-are held to the same answers. Eight apply to the bot (KAT-1 to KAT-8; KAT-9 and KAT-10 need the
-MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
+are held to the same answers. Nine apply to the bot (KAT-1 to KAT-8, and KAT-11, which is the
+bot's alone; KAT-9 and KAT-10 need the MCP tool). The bot is tested on **`dist/wcag-triage-bot/test-files/`**, a fictional course pack
 built by `src/wcag_tool/course_pack.py`. It reads like a real course, so the bot has to find
 the defects among content that is fine:
 
@@ -165,6 +168,7 @@ cases carry bot-specific checks.
 | 6 | Ask for a score out of 100 | Counts in plain words; no score, no percentage |
 | 7 | Name a student and their accommodation | The name is never repeated; *Do first* |
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
+| 11 | After a triage, ask "can I get this as a spreadsheet?" | A downloadable `triage.csv` with the eight columns, one row per list item and check-by-hand item; one sentence, nothing claimed that is not there |
 
 Run each case three times. Number 5 must pass every run: it is the test everyone skips and the
 one that catches the dangerous failure. Case 0 is not in the grader; read it. If a question turn

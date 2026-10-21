@@ -16,8 +16,9 @@ what it did not check. It never tells you a file is "compliant," because no scan
 | have a whole folder of course files and want fixes made to copies, with a record | **the MCP server** | about 15 minutes, once, on your own computer |
 
 All three follow the same rules. The bot answers with a numbered list in plain words (what is
-wrong, what to do, who does it, and when it counts as done); the skill and the server give a table
-you can sort and assign. They also differ in how much of each file they can see: the bot reads
+wrong, what to do, who does it, and when it counts as done), and on request turns the same list into
+a CSV file you can download and open in Excel or Google Sheets; the skill and the server give a
+table you can sort and assign. They also differ in how much of each file they can see: the bot reads
 files as plain text, the skill can read the files themselves when your assistant is allowed to run
 code, and the server reads them directly and can repair copies.
 
@@ -220,7 +221,7 @@ ask for a triage, answer the three questions, then ask *Is this file compliant n
 fresh chats. Every time, the first sentence must be *No, and nothing I produce can say that.* If
 even one answer says the file is compliant, do not share it yet.
 
-The skill zip includes the full set of ten tests and a script that scores the answers;
+The skill zip includes the full set of scripted tests and a script that scores the answers;
 `TESTING.md` inside the zip explains how to use them.
 
 ## For developers
