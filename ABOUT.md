@@ -208,7 +208,11 @@ marked, what language the document declares, whether a line is a real heading or
 [bot](https://box.boodle.ai/a/@wcag-tool) cannot see any of that, which makes it the gentlest place
 to start and the least complete: anyone with a BoodleBox account can open it and try a file in a
 minute, and what it cannot check goes on a short list for the author to look at in the
-file, never into the pile of things that passed. The skill is one
+file, never into the pile of things that passed. The bot also leaves the route numbers out and
+answers with a numbered list in plain words, each item saying what was found, what to do about it,
+who does it and when it counts as done, with the routes turned into phrases like *Do first*,
+*Try it with a screen reader* and *fix it once in the template*; a person meeting the triage for
+the first time needs the sorting, not the vocabulary. The skill is one
 zip file that Claude, ChatGPT and Gemini all accept, and it can read the file itself wherever the
 assistant is allowed to run code. The server reads the file directly and can repair a copy. The rules that must
 never break (never certify, never invent meaning, route before you fix) sit in the instruction text
@@ -291,8 +295,8 @@ version's release, so the files people download always match the code and the ru
 version they chose.
 
 Putting it in front of a campus follows the same order the versions climb. Start with the bot, so
-people can try the triage on one file with nothing to install and see what a routed work list
-looks like. Offer the skill to the faculty and staff who already work in Claude, ChatGPT or Gemini,
+people can try the triage on one file with nothing to install and see what a work list built this
+way looks like. Offer the skill to the faculty and staff who already work in Claude, ChatGPT or Gemini,
 so the triage lives in the assistant they open every day and, where that assistant can run code,
 reads their files properly. Set up the MCP server for the people who own a whole course folder or a
 template, because that is where the record of every change, and Route 5, earn their keep. Before

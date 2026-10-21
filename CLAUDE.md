@@ -22,8 +22,9 @@ changes, change `skill/references/routes.md`, `src/wcag_tool/findings.py`, `rule
 schemas in the same commit. Never hand-edit a `<!-- generated -->` block or `criteria.md`.
 
 **The bot is the one exception to a shared session flow.** BoodleBox never gets an MCP server or
-a code sandbox, so `bot/instructions.md` is written for a bot with no tool: its own opening,
-one-turn intake, triage layout and length limits, and no tool names. The never-break rules are
+a code sandbox, so `bot/instructions.md` is written for a bot with no tool: its own intake,
+a numbered list instead of the routed table, routes translated into plain words (*Do first*,
+never "Route 4"), length limits, and no tool names. Its opening is `bot/greeting.md`. The never-break rules are
 not rewritten there: an `<!-- include:SKILL.md#... -->` line splices them in word for word at
 build time, and a test fails if the splice is missing or a tool name leaks in. Change the rules
 in `SKILL.md`; change how the bot talks in `bot/instructions.md`.

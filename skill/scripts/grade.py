@@ -11,6 +11,7 @@ Example:
     python scripts/grade.py replies/KAT-5.run1.txt replies/KAT-5.run2.txt
     python scripts/grade.py --list
     python scripts/grade.py --list --for bot
+    python scripts/grade.py --for bot replies/KAT-*.txt
 """
 
 from __future__ import annotations
@@ -91,6 +92,11 @@ def _case_id(path: Path, ids: set[str]) -> str | None:
     return stem if stem in ids else None
 
 
+def _for_target(case: dict[str, Any], target: str | None) -> dict[str, Any]:
+    """The case as one target runs it: its entry for that target over the shared fields."""
+    return {**case, **case.get(target, {})} if target else case
+
+
 def main(argv: list[str] | None = None) -> int:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(
@@ -102,23 +108,22 @@ def main(argv: list[str] | None = None) -> int:
         "--for",
         dest="target",
         choices=("skill", "bot", "mcp"),
-        help="with --list: only the cases that apply, with that target's files and turns",
+        help="list or grade as that target runs the cases: its files, turns and checks",
     )
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     evals = json.loads(EVALS.read_text(encoding="utf-8"))
-    cases = {c["id"]: c for c in evals["cases"]}
+    cases = {c["id"]: _for_target(c, args.target) for c in evals["cases"]}
 
     if args.list or not args.replies:
         for case in cases.values():
             if args.target and args.target not in case["applies_to"]:
                 continue
-            override = case.get(args.target, {}) if args.target else {}
-            attach = ", ".join(override.get("attach", case["attach"])) or "nothing"
+            attach = ", ".join(case["attach"]) or "nothing"
             _say(f"{case['id']}  {case['title']}  [{', '.join(case['applies_to'])}]")
             _say(f"    attach: {attach}")
-            for turn in override.get("turns", case["turns"]):
+            for turn in case["turns"]:
                 _say(f"    > {turn}")
         return 0
 

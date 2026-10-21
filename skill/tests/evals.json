@@ -1,5 +1,5 @@
 {
-  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run. The BoodleBox bot asks its intake in one turn and is tested on the realistic course pack in the bot pack's test-files/ folder, so a case may carry a 'bot' entry with its own 'attach' and 'turns'; `python scripts/grade.py --list --for bot` prints those. The checks are the same.",
+  "about": "Conversation tests for the skill, the BoodleBox bot and an assistant with the MCP tool. Start a fresh session for each case, attach the fixture named in 'attach' (from tests/fixtures/, or made with `wcag-tool demo`), type each line of 'turns' in order, and save the assistant's LAST reply to a text file named after the case, e.g. KAT-5.txt or KAT-5.run2.txt. Then run: python scripts/grade.py <files>. 'auto' checks are scored by the script; 'human' checks are a list for you to tick. A model never answers word for word the same way twice, so run each case three times and look at the pass rate, not one run. The BoodleBox bot asks its intake in one turn and is tested on the realistic course pack in the bot pack's test-files/ folder, so a case may carry a 'bot' entry with its own 'attach' and 'turns'. The bot also speaks in plain words (Do first, not Route 4), so a 'bot' entry may replace 'auto' and 'human' too. Use `--for bot` with `python scripts/grade.py`, both to list the cases and to grade them.",
   "banned_words": ["compliant", "conformant", "passes", "clean", "ready", "done", "minor"],
   "exempt_phrases": [
     "A clean report is not a conformance claim.",
@@ -20,7 +20,16 @@
       ],
       "bot": {
         "attach": ["ENVS210_Syllabus_Fall2026.docx"],
-        "turns": ["Triage this file.", "No, nobody needs it this week."]
+        "turns": ["Triage this file.", "No, nobody needs it this week."],
+        "auto": [
+          { "type": "contains_all", "values": ["File:", "Finding:", "Recommendation:"], "why": "one numbered list: file, finding and recommendation for each item" },
+          { "type": "not_contains", "values": ["I applied a heading", "I've applied a heading", "has been converted to a heading"], "why": "a heading asserts meaning; it is proposed, never applied unasked" },
+          { "type": "not_contains", "values": ["Route 1", "Route 2", "Route 3", "Route 4", "Route 5", "content_owner_verified", "user_task_verified"], "why": "routes and closure states are the bot's working, not the person's vocabulary" }
+        ],
+        "human": [
+          "'Course Policies' (the bold line) is offered as a possible heading for the author to confirm, with a level question, or listed under Check these in the file.",
+          "Each item gives File (the real file name), Finding and Recommendation first, then WCAG, Who and Done when."
+        ]
       },
       "auto": [
         { "type": "contains_any", "values": ["Route 2", "| 2 |"], "why": "the heading finding is routed to the author" },
@@ -72,7 +81,15 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["A student who uses a screen reader needs this syllabus on Monday. Triage it."],
-      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
+      "bot": {
+        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+        "auto": [
+          { "type": "contains_all", "values": ["Do first"], "why": "the file a student needs is done first" },
+          { "type": "before", "first": "Do first", "then": ["Finding:", "?"], "why": "do-first comes before any item or question" },
+          { "type": "not_contains", "values": ["student's name", "name of the student", "who is the student"], "why": "the triage never needs the student's name" }
+        ],
+        "human": ["'Do first' and the syllabus are the first thing said, before any item or intake question."]
+      },
       "auto": [
         { "type": "contains_all", "values": ["Route 4"], "why": "the file is Route 4" },
         { "type": "before", "first": "Route 4", "then": ["Route 1", "Route 2", "Route 3", "Route 5"], "why": "Route 4 comes before everything else" },
@@ -113,7 +130,13 @@
       "applies_to": ["skill", "bot", "mcp"],
       "attach": ["syllabus_section_01.docx"],
       "turns": ["Just give me an accessibility score out of 100 for this file."],
-      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
+      "bot": {
+        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+        "auto": [
+          { "type": "no_score", "why": "no percentage or score of anything" },
+          { "type": "contains_any", "values": ["need your judgment", "settings to change", "to do first", "screen reader"], "why": "counts in plain words instead of a score" }
+        ]
+      },
       "auto": [
         { "type": "no_score", "why": "no percentage or score of anything" },
         { "type": "contains_any", "values": ["Route", "route"], "why": "counts by route instead of a score" }
@@ -128,7 +151,13 @@
       "turns": [
         "Pat Example in my 10am section has an accommodation letter for a screen reader and needs this by Friday. Triage the file."
       ],
-      "bot": { "attach": ["ENVS210_Syllabus_Fall2026.docx"] },
+      "bot": {
+        "attach": ["ENVS210_Syllabus_Fall2026.docx"],
+        "auto": [
+          { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
+          { "type": "contains_any", "values": ["Do first"], "why": "a student who needs it within two weeks makes it the first thing to do" }
+        ]
+      },
       "auto": [
         { "type": "not_contains", "values": ["Pat Example", "Pat"], "why": "the student's name is never repeated" },
         { "type": "contains_any", "values": ["Route 4"], "why": "a student who needs it within two weeks makes it Route 4" }

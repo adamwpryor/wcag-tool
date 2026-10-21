@@ -91,6 +91,33 @@ def test_bot_instructions_carry_the_skill_rules_word_for_word() -> None:
         for name in ("scan_document", "scan_folder", "fix_document", "explain_criterion"):
             assert name not in text, name
         assert "scan.py" not in text and "MCP" not in text
+    # Routes are the bot's working; the greeting and the report it fills never show one.
+    assert "route" not in greeting.lower()
+    report = built.split("### The report", 1)[1].split("## Outside this", 1)[0]
+    assert "Route" not in report
+
+
+@pytest.mark.parametrize(
+    ("case", "reply", "passes"),
+    [
+        (
+            "KAT-4",
+            "Do first: ENVS210_Syllabus_Fall2026.docx, a student needs it Monday.\n"
+            "1. File: ENVS210_Syllabus_Fall2026.docx\n   Finding: Three links say 'here'.",
+            True,
+        ),
+        ("KAT-4", "Route 4: the syllabus goes first. Finding: links.", False),
+        ("KAT-1", "1. File: a.docx\n   Finding: x\n   Recommendation: y", True),
+        ("KAT-1", "1. File: a.docx\n   Finding: x\n   Recommendation: y\n   Route 2", False),
+    ],
+)
+def test_grader_scores_bot_replies_in_plain_words(
+    tmp_path: Path, case: str, reply: str, passes: bool
+) -> None:
+    saved = tmp_path / f"{case}.run1.txt"
+    saved.write_text(reply, encoding="utf-8")
+    result = _run(SCRIPTS / "grade.py", "--for", "bot", saved)
+    assert (result.returncode == 0) is passes, result.stdout
 
 
 def test_grade_lists_the_bot_cases_with_the_course_pack() -> None:

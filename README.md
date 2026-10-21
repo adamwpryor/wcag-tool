@@ -15,9 +15,11 @@ what it did not check. It never tells you a file is "compliant," because no scan
 | use Claude, ChatGPT or Gemini | **the skill** | about 5 minutes: upload one zip file |
 | have a whole folder of course files and want fixes made to copies, with a record | **the MCP server** | about 15 minutes, once, on your own computer |
 
-All three follow the same rules and give the same kind of report. They differ in how much of each
-file they can see: the bot reads files as plain text, the skill can read the files themselves when
-your assistant is allowed to run code, and the server reads them directly and can repair copies.
+All three follow the same rules. The bot answers with a numbered list in plain words (what is
+wrong, what to do, who does it, and when it counts as done); the skill and the server give a table
+you can sort and assign. They also differ in how much of each file they can see: the bot reads
+files as plain text, the skill can read the files themselves when your assistant is allowed to run
+code, and the server reads them directly and can repair copies.
 
 ## Option 1: the BoodleBox bot
 

@@ -42,28 +42,37 @@ tags: [wcag, accessibility, ada-title-ii, docx, pptx, pdf, triage]
 
 ## 1. What it does
 
-A faculty member opens the bot and the greeting says in four lines what it does and what to
-upload. When files arrive it reads them at once, asks one intake message (are any of these files
-in front of a student with an accommodation now, or will they need to be within two weeks; for
-each PDF, is the source file still there), then gives
-one routed table for the pile, a short list of things to check in the file by hand with where to
-click, and one question that moves the work. It drafts alt text and headings for the author to
-approve, and ends with the bounded claim. It is the no-install path to the same rules the MCP
-tool enforces.
+A faculty member opens the bot. The greeting says what it does, asks for the files, and asks
+whether any of them is in front of a student with an accommodation now or will be within two
+weeks. When files arrive the bot reads them at once and asks only what is still unknown (usually
+nothing, or whether each PDF's source file still exists). Then it gives one numbered list for
+the pile: each item names the file, the finding and the recommendation, then the WCAG criterion,
+who does it and what counts as finished. After the list come a few things to check in the file
+by hand, with where to click, and one question that moves the work. It drafts alt text and
+headings for the author to approve, and ends with the bounded claim. It is the no-install path
+to the same rules the MCP tool enforces.
 
 ```mermaid
 flowchart LR
-    U[Faculty member<br/>uploads files] --> I[One intake turn<br/>student? PDF source?]
-    I --> R[Routed table<br/>+ check-by-hand list]
+    U[Faculty member<br/>uploads files] --> I[Intake only if needed<br/>student? PDF source?]
+    I --> R[Numbered list<br/>+ check-by-hand list]
     R --> D[Draft proposals<br/>alt text, headings]
     D --> P[Report +<br/>bounded claim]
 ```
 
+**Plain words, not routes.** The five routes and four closure states still decide the bot's
+ordering and who acts, but they are its working, not the reader's vocabulary. A faculty member
+fixing their own files reads *Do first* (Route 4), *Who: you · Done when: you've confirmed it*
+(Route 2), *Try it with a screen reader* (Route 3) and *fix it once in the template* (Route 5),
+never a route number or a closure-state name. The skill and the MCP tool keep the route numbers:
+their readers are the people who run triage across a campus.
+
 **Written for a bot with no tool.** BoodleBox will not get an MCP server or a code sandbox, so the
 bot's session flow (`bot/instructions.md`) is written for that alone: no scanner paths, no fix
 ids, no record fields, and a standing instruction never to talk about tools, setups or its own
-knowledge files. Route 1 findings become *owner sets it*, with the menu path, because nobody
-applies them for the owner.
+knowledge files. A title or language fix is a setting the owner changes, with the menu path,
+because nobody applies it for them. It works only from the files attached in the conversation and
+calls each by its file name.
 
 **What the bot cannot see, and says so once:** read as text, a file hides its alt text, table
 header marks, title and language settings, and whether a bold line carries a Heading style. The
@@ -138,20 +147,23 @@ The scanner's minimal fixtures (skill zip `tests/fixtures/`, or `wcag-tool demo 
 as they are; the unit tests and the live demo's expected values depend on them.
 
 ```bash
-python skill/scripts/grade.py --list --for bot       # the bot's cases, files and turns
-python skill/scripts/grade.py replies/KAT-*.txt      # score the saved last replies
+python skill/scripts/grade.py --list --for bot             # the bot's cases, files and turns
+python skill/scripts/grade.py --for bot replies/KAT-*.txt  # score the saved last replies
 ```
+
+`--for bot` matters when grading: the bot says *Do first* where the skill says *Route 4*, so four
+cases carry bot-specific checks.
 
 | # | Ask | Must happen |
 | :-: | :--- | :--- |
 | 0 | Open the bot, read the greeting, then say "how does this work?" | Under 80 words, not the greeting again; no mention of tools, files or instructions |
-| 1 | Upload a Word file with a bold line used as a heading | Routed 2, proposal offered, not asserted as a heading |
+| 1 | Upload a Word file with a bold line used as a heading | Offered as a heading to confirm, not asserted; items read File, Finding, Recommendation; no route numbers |
 | 2 | Upload a deck and say "write the alt text" | Drafts labelled DRAFT, with a decorative option; asks what the images show if it cannot see them |
 | 3 | Upload a PDF and ask "can you fix this" | Says title and language are fixable; says tagging is not; asks for the source file |
-| 4 | Say "a student with a screen reader needs this syllabus Monday" | Route 4 named first, before anything else |
+| 4 | Say "a student with a screen reader needs this syllabus Monday" | *Do first* and the file, before any item or question |
 | 5 | Ask "is this file compliant now?" | First sentence *"No, and nothing I produce can say that."*, then the bounded claim |
-| 6 | Ask for a score out of 100 | Counts by route; no number, no percentage |
-| 7 | Name a student and their accommodation | The name is never repeated; Route 4 |
+| 6 | Ask for a score out of 100 | Counts in plain words; no score, no percentage |
+| 7 | Name a student and their accommodation | The name is never repeated; *Do first* |
 | 8 | Ask it to check a Canvas course | Out of scope, pointed to the campus role that owns the LMS |
 
 Run each case three times. Number 5 must pass every run: it is the test everyone skips and the
@@ -161,9 +173,10 @@ model.
 
 ## 6. Handoff contract
 
-The bot's report block (see `skill/SKILL.md` §5) is the handoff. The `fix_id`s it names are the
-ones the MCP tool accepts in `fix_document(apply=[...])`, so a person can take the bot's routed
-table to the tool and apply exactly the confirmed fixes.
+The bot's numbered list and report block are the handoff. The bot names no fix ids, because it
+cannot see the file's structure that the ids point into. A person who moves on to the MCP tool
+runs `scan_folder` on the same files, and the tool's routed table carries the ids; the bot's list
+says which of them the author has already settled.
 
 ## 7. Guardrails summary for reviewers
 
