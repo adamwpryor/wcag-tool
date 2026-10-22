@@ -14,12 +14,16 @@ from mcp.server import MCPServer
 
 from wcag_tool import engine, log, rules
 from wcag_tool.findings import ROUTES_SUMMARY
+from wcag_tool.report import Batch, worklist_fields
 
 INSTRUCTIONS = (
     "Accessibility triage for course documents (DOCX, PPTX, PDF). scan_document returns "
     "routed findings for one file, each with its locator; scan_folder does a pile and adds "
-    "Route 5 candidates. A scan reads settings, not meaning: read every page too, and answer "
-    "in the triage skill's plain-words list, not the routed table, which is working data. "
+    "Route 5 candidates. Both return `worklist`, the plain-words work order already laid out "
+    "from the scan's facts, and `worklist_items`, which maps each item number to its file, "
+    "place and fix_id: build the reply on the worklist, filling its marked gaps by reading "
+    "every page, since a scan reads settings, not meaning. Change a course file only through "
+    "fix_document, never with any other tool or code. "
     "fix_document repairs only what is deterministic unless a person "
     "names a specific fix; describe_routes explains the five routes; explain_criterion quotes "
     "W3C's text for one WCAG criterion and says what the tool can and cannot judge about it. "
@@ -44,13 +48,15 @@ def scan_document(path: str) -> dict[str, Any]:
     a fix_id when the tool can repair it. The report also lists what was
     evaluated, what was not (every WCAG 2.1 A and AA criterion appears, with who
     can judge it), `coverage` (criterion numbers by status), and `criteria`
-    (W3C's text for each criterion a finding names). A clean report is not a
-    conformance claim.
+    (W3C's text for each criterion a finding names). `worklist` is the plain-words
+    work order for the person, and `worklist_items` maps each of its numbers to
+    the finding's place and fix_id. A clean report is not a conformance claim.
 
     Args:
         path: Absolute or relative path to the file on this machine.
     """
-    return engine.scan(_path(path)).to_dict()
+    report = engine.scan(_path(path))
+    return {**report.to_dict(), **worklist_fields(Batch(reports=[report]))}
 
 
 @mcp.tool()
@@ -93,10 +99,10 @@ def scan_folder(path: str, recursive: bool = True) -> dict[str, Any]:
 
     Adds what a single scan cannot see: Route 5 candidates, meaning checks that
     recur across enough files to be fixed once at the template or the export
-    setting instead of in every copy. The result includes a `markdown` field
-    holding the routed table: working data, not the reply. The triage skill
-    answers in a plain-words list, page by page, placing each finding by its
-    `locator`.
+    setting instead of in every copy. `worklist` is the plain-words work order
+    to build the reply on, and `worklist_items` maps each of its numbers to the
+    finding's place and fix_id. `markdown` holds the routed table: working data,
+    not the reply.
 
     Args:
         path: Folder on this machine.

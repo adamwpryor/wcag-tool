@@ -1,8 +1,12 @@
-"""A pile of files: Route 5 aggregation and the routed table the skill asks for.
+"""A pile of files: Route 5 aggregation, the routed table, and the plain-words work order.
 
 One file is a report. A pile is a batch. The batch is where Route 5 lives,
 because a systemic defect is only visible across files, and it is where the time
 goes back: one template fix retires the same finding in every section.
+
+The routed table (``render_markdown``) is working data. What a person reads is the
+work order (``render_worklist``): the six-part template from the skill's *The list*,
+laid out from the scan's facts so the format never depends on the model.
 """
 
 from __future__ import annotations
@@ -13,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from wcag_tool import rules
-from wcag_tool.findings import BOUNDED_CLAIM, Finding, Report, Route
+from wcag_tool.findings import BOUNDED_CLAIM, Closure, Finding, Report, Route
 
 # A sentence ends at a period followed by whitespace, so "image.png" stays whole.
 _SENTENCE_END = re.compile(r"(?<=\.)\s+")
@@ -150,6 +154,7 @@ class Batch:
             "criteria": rules.load().criteria_detail(found),
             "bounded_claim": BOUNDED_CLAIM,
             "markdown": render_markdown(self),
+            **worklist_fields(self),
         }
 
 
@@ -248,3 +253,261 @@ def render_markdown(batch: Batch) -> str:
     lines.append(f"*{CLOSING_SENTENCE}*")
     lines.append("")
     return "\n".join(lines)
+
+
+# ----- the work order ------------------------------------------------------------------------
+
+# Which part of the six-part template a check's findings belong to. Anything not named here is
+# a page-by-page item.
+_WHOLE_DOCUMENT = {
+    "missing-title",
+    "missing-language",
+    "untagged",
+    "no-headings",
+    "scanned-no-text",
+}
+_PICTURES = {"image-missing-alt", "picture-untagged"}
+_FIELDS = {"form-field-no-name"}
+
+# What "finished" means, in the person's words, for each closure state.
+_FINISHED_WHEN = {
+    Closure.AUTOMATICALLY_VERIFIED: "the setting is changed",
+    Closure.CONTENT_OWNER_VERIFIED: "you've confirmed or edited it",
+    Closure.EXPERT_VERIFIED: "someone with Acrobat and a screen reader checks it",
+    Closure.USER_TASK_VERIFIED: "they complete the task",
+}
+
+_CHECKERS = {
+    "pdf": "Acrobat: Prepare for accessibility › Check for accessibility, with *Create "
+    "accessibility report* ticked",
+    "docx": "Word: Review › Check Accessibility",
+    "pptx": "PowerPoint: Review › Check Accessibility",
+}
+
+# Where a person changes a setting the tool can also set in a copy, by check id.
+_SETTING_PATHS = {
+    "docx.missing-title": "File › Info › Properties › Title",
+    "pptx.missing-title": "File › Info › Properties › Title",
+    "pdf.missing-title": "File › Properties › Description › Title, then Initial View › Show: "
+    "Document Title",
+    "docx.missing-language": "Select all, then Review › Language › Set Proofing Language",
+    "pdf.missing-language": "File › Properties › Advanced › Language",
+}
+
+_PLACE = re.compile(r"^(page|slide)s? (\d+)", re.IGNORECASE)
+_COUNTED = re.compile(r"^(paragraph|table|hyperlink) (\d+)$")
+_COUNTED_NAMES = {"paragraph": "Paragraph", "table": "Table", "hyperlink": "Link"}
+
+
+@dataclass
+class WorkItem:
+    """One numbered item of the work order, with what an agent needs to act on it.
+
+    Attributes:
+        number: The item's number in the rendered list.
+        part: Which part of the template it sits in, 1 to 6.
+        asset: The file.
+        where: The place as a person finds it: "Slide 4, Picture 2", "Paragraph 14".
+        finding: The scan's finding.
+        fix_id: The fix the tool can apply once the person agrees, or None.
+    """
+
+    number: int
+    part: int
+    asset: str
+    where: str
+    finding: Finding | None
+    fix_id: str | None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to plain types."""
+        return {
+            "number": self.number,
+            "part": self.part,
+            "file": self.asset,
+            "where": self.where,
+            "check": self.finding.check if self.finding else None,
+            "locator": self.finding.locator if self.finding else None,
+            "fix_id": self.fix_id,
+        }
+
+
+def _where(locator: str) -> str:
+    """A locator as a person would look for it. The scanner counts from 0; people from 1."""
+    counted = _COUNTED.match(locator)
+    if counted:
+        return f"{_COUNTED_NAMES[counted.group(1)]} {int(counted.group(2)) + 1}"
+    return locator[:1].upper() + locator[1:]
+
+
+def _part(finding: Finding) -> int:
+    kind = finding.check.split(".", 1)[1]
+    if kind in _WHOLE_DOCUMENT:
+        return 1
+    if kind in _PICTURES:
+        return 3
+    if kind in _FIELDS:
+        return 4
+    return 2
+
+
+def _place_key(locator: str) -> tuple[int, int]:
+    """Page or slide order, so part 2 runs first page to last; other places keep scan order."""
+    place = _PLACE.match(locator)
+    return (0, int(place.group(2))) if place else (1, 0)
+
+
+def _first_sentence(text: str) -> str:
+    return _SENTENCE_END.split(text, maxsplit=1)[0].rstrip(".") + "."
+
+
+def worklist(batch: Batch) -> list[WorkItem]:
+    """The work order's items, numbered straight through, file by file and part by part.
+
+    Args:
+        batch: The scanned pile.
+
+    Returns:
+        Every finding as a numbered item, then one *Check your work* item per file.
+    """
+    items: list[WorkItem] = []
+    for report in batch.reports:
+        by_part: dict[int, list[Finding]] = defaultdict(list)
+        for finding in report.findings:
+            by_part[_part(finding)].append(finding)
+        for part in (1, 2, 3, 4):
+            ordered = sorted(by_part[part], key=lambda f: _place_key(f.locator))
+            for finding in ordered:
+                where = "" if part == 1 else _where(finding.locator)
+                items.append(
+                    WorkItem(len(items) + 1, part, report.asset, where, finding, finding.fix_id)
+                )
+        items.append(WorkItem(len(items) + 1, 5, report.asset, "", None, None))
+    return items
+
+
+def _item_lines(item: WorkItem, heading: str | None = None) -> list[str]:
+    finding = item.finding
+    assert finding is not None
+    check = rules.load().checks[finding.check]
+    where = item.where
+    if heading and where == heading:
+        where = ""
+    elif heading and where.startswith(f"{heading}, "):
+        where = where[len(heading) + 2 :]
+    title = f"{where} · {check.finding}" if where else check.finding
+    who = "you"
+    if finding.closure_required == Closure.EXPERT_VERIFIED:
+        who = "you, or someone with Acrobat"
+    recommendation = finding.proposal or check.remedy
+    path = _SETTING_PATHS.get(finding.check)
+    if path and finding.fix_id == "set-language":
+        who = "you, or I can set it in a copy once you name the language"
+        recommendation = f"{path}. I never guess a language: tell me which it is."
+    elif path:
+        who = "you, or I can set it in a copy"
+        recommendation = f"{path}."
+    return [
+        f"{item.number}. **{title}**",
+        f"   - **Finding:** {finding.evidence}",
+        f"   - **Recommendation:** {recommendation}",
+        f"   - **WCAG** {finding.criterion} · **Who:** {who} · **Finished when:** "
+        f"{_FINISHED_WHEN[finding.closure_required]}",
+    ]
+
+
+def render_worklist(batch: Batch) -> str:
+    """Render the six-part work order from the scan's facts, in the person's words.
+
+    No route numbers, check ids or fix ids appear: ``worklist_fields`` carries those for
+    the agent. What a scan cannot know is left as a marked gap for the agent to fill from
+    reading every page: what each picture shows, the words-only items, *Do first*, names,
+    and the screen-reader task.
+
+    Args:
+        batch: The scanned pile.
+
+    Returns:
+        Markdown text.
+    """
+    items = worklist(batch)
+    found = sum(1 for i in items if i.finding)
+    pictures = sum(1 for i in items if i.part == 3)
+    fields = sum(1 for i in items if i.part == 4)
+    lines = [
+        f"**In these files:** {found} items from the scan · pictures to settle: {pictures} · "
+        f"pages with fields to name: {fields} · reading every page adds the rest",
+        "",
+    ]
+    titles = {
+        1: "1 · Entire document",
+        2: "2 · Page by page",
+        3: "3 · Pictures, in order",
+        4: "4 · Fill-in fields",
+        5: "5 · Check your work",
+        6: "6 · Try it with a screen reader",
+    }
+    gaps = {
+        2: "*Add what reading every page finds: links, colour or position, headings, tables, "
+        "reading order.*",
+        3: "*Look at each picture: describe it, then Decorative or a DRAFT alt text. Add any "
+        "drawing made of shapes, which the scan cannot count.*",
+        4: "*Add each field's printed label: that is the name to give it.*",
+        6: "*Name one task in the file that matters most.*",
+    }
+    for report in batch.reports:
+        mine = [i for i in items if i.asset == report.asset]
+        lines += [f"**`{report.asset}`**", ""]
+        for part in range(1, 7):
+            lines += [f"**{titles[part]}**", ""]
+            in_part = [i for i in mine if i.part == part]
+            if part == 5:
+                item = in_part[0]
+                lines += [
+                    f"{item.number}. **The program's own checker:** {_CHECKERS[report.format]}. "
+                    "Upload the report, paste it, or send a screenshot, and I'll add anything "
+                    "it found that this list doesn't have.",
+                    "",
+                ]
+                continue
+            heading: str | None = None
+            for item in in_part:
+                place = _PLACE.match(item.finding.locator) if item.finding else None
+                page = f"{place.group(1).title()} {place.group(2)}" if place else None
+                if part == 2 and page and page != heading:
+                    lines += [f"**{page}**", ""]
+                    heading = page
+                if part in (3, 4):
+                    assert item.finding is not None
+                    lines.append(
+                        f"{item.number}. **{item.where}:** {_first_sentence(item.finding.evidence)}"
+                    )
+                else:
+                    lines += [*_item_lines(item, heading), ""]
+            if part in (3, 4) and in_part:
+                lines.append("")
+            if part in gaps:
+                lines += [gaps[part], ""]
+            elif not in_part:
+                lines += ["*None.*", ""]
+    lines.append(
+        "*Not checked by the scan, and still to judge: everything under `not_evaluated` in the "
+        "result.*"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def worklist_fields(batch: Batch) -> dict[str, Any]:
+    """The work order for a result: the rendered list and the map from number to fix id.
+
+    Args:
+        batch: The scanned pile.
+
+    Returns:
+        ``worklist`` (Markdown) and ``worklist_items`` (one entry per numbered item).
+    """
+    return {
+        "worklist": render_worklist(batch),
+        "worklist_items": [item.to_dict() for item in worklist(batch)],
+    }

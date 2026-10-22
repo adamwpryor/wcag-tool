@@ -34,6 +34,9 @@ def test_tools_in_memory(bad_docx: Path) -> None:
             data = _structured(result)
             assert data["asset"] == bad_docx.name
             assert "bounded_claim" in data
+            # The work order travels with every scan, with the map an agent applies fixes by.
+            assert "**1 · Entire document**" in data["worklist"]
+            assert any(i["fix_id"] for i in data["worklist_items"])
             routes = await client.call_tool("describe_routes", {})
             assert "Five routes" in routes.content[0].text
             explained = _structured(

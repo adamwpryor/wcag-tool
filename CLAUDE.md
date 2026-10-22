@@ -85,7 +85,7 @@ python tools/build_skill.py --check    # exit 1 if a generated page is stale (a 
 python skill/scripts/selftest.py       # scanner vs tests/expected; --update after a deliberate change
 wcag-tool                              # starts the stdio server; blocks waiting for a client
 wcag-tool demo ./sample                # five fictional files for the live demo
-wcag-tool scan ./sample                # routed table with Route 5 lines; --json for data
+wcag-tool scan ./sample                # routed table with Route 5 lines; --list for the work order; --json for data
 ```
 
 ## Module map
@@ -94,7 +94,7 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --json
 | :--- | :--- |
 | `rules.py` + `rules/*.json` | The rule set as data: load, cross-check, evaluated / not-evaluated lists, Markdown renderers |
 | `findings.py` | `Finding` (built with `Finding.from_check`), `Report`, the routes and closure enums, the bounded claim |
-| `report.py` | `Batch` (a pile), Route 5 aggregation, `render_markdown` |
+| `report.py` | `Batch` (a pile), Route 5 aggregation, `render_markdown` (the routed table, working data), `render_worklist` and `worklist_fields` (the six-part plain-words work order and its number-to-fix-id map, returned by both scan tools) |
 | `engine.py` | dispatch by extension, `scan`, `scan_many`, `scan_folder`, `fix` |
 | `docx_checks.py` / `docx_fixes.py`, `pptx_checks.py`, `pdf_checks.py` | per-format checks and fixes |
 | `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |

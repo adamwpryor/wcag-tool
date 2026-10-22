@@ -1,7 +1,9 @@
+import re
 from pathlib import Path
 
 from wcag_tool import engine
-from wcag_tool.report import render_markdown
+from wcag_tool.demo import make_worksheet_pdf
+from wcag_tool.report import render_markdown, render_worklist, worklist_fields
 
 
 def test_scan_folder_aggregates_route_five(demo_dir: Path) -> None:
@@ -54,6 +56,44 @@ def test_batch_dict_carries_markdown(demo_dir: Path) -> None:
     assert header.startswith("# Triage: 5 files (")
     assert "3 docx" in header and "1 pptx" in header and "1 pdf" in header
     assert data["systemic"] and all(s["route"] == 5 for s in data["systemic"])
+
+
+_PARTS = (
+    "**1 · Entire document**",
+    "**2 · Page by page**",
+    "**3 · Pictures, in order**",
+    "**4 · Fill-in fields**",
+    "**5 · Check your work**",
+    "**6 · Try it with a screen reader**",
+)
+
+
+def test_worklist_is_the_six_part_template_in_plain_words(demo_dir: Path) -> None:
+    worksheet = make_worksheet_pdf(demo_dir / "observation_worksheet.pdf")
+    batch = engine.scan_folder(demo_dir)
+    text = render_worklist(batch)
+    # Every file gets every part, in order.
+    for report in batch.reports:
+        block = text.split(f"**`{report.asset}`**", 1)[1].split("**`", 1)[0]
+        positions = [block.index(part) for part in _PARTS]
+        assert positions == sorted(positions), report.asset
+    # The person never reads a route, a check id or a fix id.
+    assert "Route" not in text and "route" not in text
+    assert not re.search(r"\b(docx|pptx|pdf)\.[a-z-]+", text)
+    for fix_id in ("set-title", "set-language", "mark-header-row", "apply-heading"):
+        assert fix_id not in text, fix_id
+    assert "compliant" not in text.lower()
+    # Numbers run straight through and match the map an agent uses to apply fixes.
+    numbers = [int(n) for n in re.findall(r"^(\d+)\. ", text, re.M)]
+    items = worklist_fields(batch)["worklist_items"]
+    assert numbers == list(range(1, len(numbers) + 1)) == [i["number"] for i in items]
+    assert any(i["fix_id"] == "set-title" for i in items)
+    # The worksheet's picture and fields land in their parts, on their pages.
+    block = text.split(f"**`{worksheet.name}`**", 1)[1]
+    pictures = block.split("**3 · Pictures, in order**", 1)[1].split("**4 ·", 1)[0]
+    fields = block.split("**4 · Fill-in fields**", 1)[1].split("**5 ·", 1)[0]
+    assert "**Page 1:** 1 picture on this page." in pictures
+    assert "**Page 2:** 2 fill-in fields" in fields
 
 
 def test_scan_many_records_unreadable_files(tmp_path: Path) -> None:

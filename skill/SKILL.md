@@ -132,8 +132,13 @@ than one file, otherwise `scan_document` on the file. Each finding has a `locato
 `slide 4, Picture 2`, `paragraph 13`, `table 0`, `pages 1-2`) and `evidence` (what the check
 found). Use them to put the finding at its place in the list, said the way a person would find
 it: paragraph, table and link numbers count from 0, so name the nearest heading or quote the text
-instead. The result's `markdown` field is the routed table; it is your working, never the reply.
-Each entry in `systemic` is a *fix it once in the template* item. The result's `criteria` field
+instead. The result's `worklist` field is the six-part list already laid out from the scan's
+facts, numbered and in plain words: build your reply on it, and fill each gap it marks in italics
+by reading every page (the words-only items, what each picture shows, each field's printed
+label, the screen-reader task), plus *Do first* and names. `worklist_items` maps each number to
+its file, place and `fix_id`; renumber as you add items and keep each id with its item. The
+`markdown` field is the routed table: your working, never the reply. Each entry in `systemic` is
+a *fix it once in the template* item. The result's `criteria` field
 quotes W3C's text for every criterion a finding names; use it, or `explain_criterion`, when the
 author asks why.
 
@@ -145,7 +150,8 @@ a notebook) and this skill's `scripts/` folder is with you, run
 would from `scan_folder`: the same fields, each finding with its `locator` and `evidence`. It
 never writes to a file. If it stops with an install line, run that line once; if that is not
 possible, say which libraries are missing and continue by eye. Say in the first answer, once,
-that you can find and place problems here but cannot change the files.
+that you can find and place problems here but cannot change the files, and do not: never edit,
+rewrite or re-save a course file with code of your own.
 <!-- /variant:run-code -->
 
 **If no tool is connected and you cannot run code**, ask for the file or its contents. You read
@@ -414,6 +420,11 @@ older Acrobat, *All tools › Prepare for accessibility* is *Tools › Accessibi
 <!-- variant:tool-fix -->
 ## Fixing, with the wcag-tool connected
 
+**Change a course file only through `fix_document`.** Never edit, rewrite or re-save one any
+other way: not with a script, not with another tool, not in place. `fix_document` is what keeps
+the original untouched, writes the copy beside it, and leaves the record of what changed; a
+change made any other way has none of those, so it is not done here at all.
+
 Only with the wcag-tool connected, and only after the list. First ask the one question the tool
 cannot answer: *"What language are these files written in?"* A file in a language the owner did
 not name keeps its language item open; you never pass a language you guessed. Then run
@@ -431,8 +442,8 @@ read *Who: me, in the copy · Finished when: you've opened the copy and seen it.
 
 Then the proposals, as *Drafts and proposals* says. Ask for each yes by the item's number and
 what it changes (*"Item 4: mark the first row of the schedule table as its header row?"*), never
-as a batch. Each yes maps to that finding's `fix_id`; pass exactly the confirmed ids in `apply` in
-the second `fix_document` call. Never pass a fix id the owner has not confirmed one by one.
+as a batch. Each yes maps to that item's `fix_id` in `worklist_items`; pass exactly the confirmed
+ids in `apply` in the second `fix_document` call. Never pass a fix id the owner has not confirmed one by one.
 
 PDFs: the tool sets the title and the language. Nothing else. An untagged PDF goes back to its
 source, in the words of the PDF passage in `references/checks.md`.

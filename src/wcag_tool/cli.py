@@ -15,7 +15,7 @@ from pathlib import Path
 
 from wcag_tool import __version__, engine, log
 from wcag_tool.demo import make_demo_set
-from wcag_tool.report import render_markdown
+from wcag_tool.report import render_markdown, render_worklist
 
 
 def _path(text: str) -> Path:
@@ -37,6 +37,9 @@ def _parser() -> argparse.ArgumentParser:
     scan = sub.add_parser("scan", help="scan a file or a folder and print the routed table")
     scan.add_argument("path", type=_path)
     scan.add_argument("--json", action="store_true", help="print JSON instead of Markdown")
+    scan.add_argument(
+        "--list", action="store_true", help="print the plain-words work order, not the table"
+    )
     scan.add_argument("--no-recursive", action="store_true", help="do not descend into subfolders")
 
     fix = sub.add_parser("fix", help="write a remediated copy of one file and a JSON record")
@@ -91,7 +94,10 @@ def main(argv: list[str] | None = None) -> int:
                 batch = engine.scan_folder(args.path, recursive=not args.no_recursive)
             else:
                 batch = engine.scan_many([args.path])
-            _write(json.dumps(batch.to_dict(), indent=2) if args.json else render_markdown(batch))
+            if args.json:
+                _write(json.dumps(batch.to_dict(), indent=2))
+            else:
+                _write(render_worklist(batch) if args.list else render_markdown(batch))
             return 0
         if args.command == "fix":
             record = engine.fix(

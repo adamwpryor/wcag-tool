@@ -168,6 +168,28 @@ it.
 - Gemini CLI: add the block to the `settings.json` file in the `.gemini` folder of your home
   folder.
 
+**In an agent, let it look freely but ask before it changes anything.** Scanning only reads your
+files, so it can run without asking. Writing a fixed copy should wait for your yes every time.
+In Claude Code, put this in the project's `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__wcag-tool__scan_document",
+      "mcp__wcag-tool__scan_folder",
+      "mcp__wcag-tool__describe_routes",
+      "mcp__wcag-tool__explain_criterion"
+    ],
+    "ask": ["mcp__wcag-tool__fix_document"]
+  }
+}
+```
+
+The tool never overwrites a file: it writes a fixed copy beside the original, with a record of
+what changed. An agent can still change a file by other means, such as a script of its own, so
+if it offers to "just fix" a course file directly, say no and ask it to use the tool.
+
 **Any other assistant** that runs local MCP servers (Cursor and VS Code among them) takes the same
 command and arguments; look for its MCP settings.
 
