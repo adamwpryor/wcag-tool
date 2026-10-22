@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wcag-tool"
-version = "0.3.0"
+version = "0.4.0"
 description = "Finds WCAG 2.1 AA problems in course documents (DOCX, PPTX, PDF), fixes the deterministic ones, routes the rest to a person, and never claims conformance."
 readme = "README.md"
 requires-python = ">=3.11"
