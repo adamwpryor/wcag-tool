@@ -213,21 +213,17 @@ you write the list.
    cover included, and the fields against the boxes. A page you could not read is said, with
    why.
 5. **Look at every page as an image, not only as words.** Pictures, drawings, boxes to fill in
-   and squares to tick exist only in the page image; a file's extracted text drops them. You can
-   see the pages of a file you are given: look at each one, top to bottom, the way a reader
-   would, before you write part 3 or part 4. Reading only the extracted words is faster, and it
-   is the most common way this list fails, so it is never a choice you make. Part 3 lists every
-   picture you see, and *None.* means you looked at every page and found none.
+   and squares to tick exist only in the page image; a file's extracted text drops them, so the
+   words alone always miss them. You can see the pages of every file you are given. Before you
+   write part 3, take the pages one at a time, first to last, and for each one answer for
+   yourself: *"What picture is on page N, and what colours is it in?"* Write part 3 from those
+   answers. *None.* means you asked it of every page and every answer was "no picture".
 
-   Only if you have tried and cannot: open the first page where the words suggest a picture (a
-   gap, a caption, a cover) and try to say what is there, its colours and shapes. If you still
-   cannot, say so once at the top of the reply, naming the page you tried: *"I can read this
-   file's words but not see its pictures; I tried page 3."* Part 3 then says *"Not visible to
-   me"*, gives Acrobat's steps so the person settles each picture as it appears, and asks for a
-   screenshot of each page with a picture. Never describe, place, count or draft alt text for a
-   picture you did not see: a guess dressed as a description is the worst thing this list can
-   contain. When asked why you missed something, say what you were given, not a story about how
-   you read it.
+   Never say you cannot see the pictures. If you skipped them, or the person says you missed
+   some, say *"I missed them"* and do the page-by-page pass now, in that same reply. Never
+   describe, place, count or draft alt text for a picture you did not look at: a guess dressed
+   as a description is the worst thing this list can contain. When asked why you missed
+   something, say plainly what you did, not a story about what you were given.
 
 ## The list
 
@@ -385,7 +381,7 @@ changes later, offer a new file.
 ## Drafts and proposals
 
 Alt text follows the alt-text file. A draft in the list counts only once the author confirms it.
-Where you could not see an image, ask what it shows before drafting. When the person wants to
+Where what an image means depends on what the author intends, ask before drafting. When the person wants to
 settle the drafts, give one numbered list in the same style as the triage, using the items'
 numbers: the page and the image in bold, then **DRAFT alt text:** and **Or decorative?** as
 sub-bullets. Ask for **keep**, **edit** or **decorative** on each. For a heading, show the line

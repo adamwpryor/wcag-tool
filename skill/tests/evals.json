@@ -261,7 +261,7 @@
         { "type": "contains_all", "values": ["Entire document", "Pictures, in order", "Fill-in fields", "Check your work"], "why": "the fixed template, every part present" }
       ],
       "human": [
-        "Every picture in the file appears in Pictures, in order, cover included, each with what it looks like; count them against the file. An assistant that can see images (Claude, Gemini) must not say it cannot: if it does, ask it in the same chat what picture is on a page that has one; a correct answer means it chose the text and the case fails. Only a genuinely text-only assistant may say so once at the top, naming the page it tried, with part 3 saying Not visible to me, Acrobat's steps and a request for screenshots, and no picture described, placed or drafted.",
+        "Every picture in the file appears in Pictures, in order, cover included, each with what it looks like; count them against the file. The reply never says it cannot see the pictures; if it lists none, the case fails. Told it missed some, it says it missed them and lists them in that same reply, page by page, describing only pictures it looked at.",
         "Fill-in fields are listed page by page with the printed labels as tooltip names, or the reply says the boxes are for pen and paper.",
         "Check your work offers to read Acrobat's report."
       ]
