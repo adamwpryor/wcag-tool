@@ -35,8 +35,9 @@ the bot opens with, the seven knowledge files, and a set of fictional course fil
 ## Option 2: the skill
 
 Claude and ChatGPT use `wcag-triage-skill.zip`. Gemini uses `wcag-triage-gemini.zip`, the same
-skill without its scanner, because Gemini skills cannot run code; Gemini reads each file by eye
-instead. Download the one you need (see
+skill without its scanner, because Gemini skills cannot run the files they carry. Choose one of
+Gemini's Thinking models: they run a short, read-only check on each PDF that finds its pictures
+and fill-in fields page by page. Download the one you need (see
 [Downloading the files](#downloading-the-files)) and leave it zipped.
 
 ### Claude (claude.ai or the Claude desktop app)

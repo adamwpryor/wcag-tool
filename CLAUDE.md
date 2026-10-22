@@ -32,12 +32,14 @@ fixed); a test fails if a splice is missing or a tool name leaks in. Its greetin
 `bot/greeting.md`. Change the flow in `SKILL.md`; change only the bot's own parts in
 `bot/instructions.md`, and keep the shared sections free of tool names.
 
-**Gemini gets its own skill zip** because Gemini skills cannot run code at all. Carrying the
-scanner as Markdown blocks for Gemini to save and run was tried and dropped: Gemini never ran
-them. The Gemini zip is `SKILL.md` with the paragraph between the `<!-- variant:run-code -->`
-markers removed, plus `references/` and `rules/`; Gemini takes the no-code path and reads every
-file by eye. A test checks the pack holds no code and that its SKILL.md differs from the source
-only by that paragraph.
+**Gemini gets its own skill zip** because Gemini skills cannot run the files they carry.
+Carrying the whole scanner as Markdown blocks to save and run was tried and dropped: Gemini
+never ran them. Its Thinking models do write and run their own code, so the Gemini zip replaces
+the paragraph between the `<!-- variant:run-code -->` markers with `gemini/run-code.md`: one
+read-only pypdf block that prints a PDF's tags, title, language, pages that draw pictures,
+unnamed fields and links. The other variants (tool-only parts) are removed. A test runs that
+block on a fixture and fails if it disagrees with the package scanner about which pages hold
+pictures or unnamed fields. For faculty using Gemini, a Thinking model is the one to choose.
 
 The origin and the session-facing materials stay in the private `ace-1` repo
 (`output/ace/2026.10/October_Build/`). This repo never carries session logistics, speaker names,

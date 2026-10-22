@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import io
+import re
 import subprocess
 import sys
 import zipfile
@@ -10,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from wcag_tool.demo import make_demo_set
+from wcag_tool.demo import make_demo_set, make_worksheet_pdf
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skill" / "scripts"
@@ -293,8 +294,11 @@ def test_skill_zip_carries_rules_scripts_and_tests(tmp_path: Path) -> None:
     assert prefix + "scripts/wcag_tool/cli.py" not in names
 
 
-def test_gemini_pack_is_prose_and_rules_only() -> None:
-    # Gemini skills cannot run code, so the pack carries no scanner and no run-code path.
+_GEMINI_RUN = ROOT / "gemini" / "run-code.md"
+
+
+def test_gemini_pack_carries_one_code_block_and_no_scanner() -> None:
+    # Gemini skills cannot run the files they carry: no scanner, no scripts, no tool paths.
     files = dict(build_skill.gemini_files(ROOT / "skill"))
     assert not [n for n in files if n.endswith((".py", ".sh"))]
     assert not [n for n in files if n.startswith(("scripts/", "tests/", "scanner/"))]
@@ -306,10 +310,51 @@ def test_gemini_pack_is_prose_and_rules_only() -> None:
         assert unneeded not in files, unneeded
     skill = files["SKILL.md"].decode("utf-8")
     assert "scripts/" not in skill and "variant:" not in skill
-    # The run-code paragraph and every part that needs the wcag-tool are left out.
     for gone in ("but you can run code", "scan_folder", "fix_document", "## Fixing"):
         assert gone not in skill, gone
     assert "If no tool is connected and you cannot run code" in skill
-    # Everything outside the marked parts is SKILL.md word for word.
+    # The run-code paragraph is Gemini's own; everything else is SKILL.md word for word.
+    run = _GEMINI_RUN.read_text(encoding="utf-8").strip() + "\n\n"
+    assert run in skill
     source = (ROOT / "skill" / "SKILL.md").read_text(encoding="utf-8")
-    assert skill == build_skill._VARIANT.sub("", source)
+    assert skill.replace(run, "", 1) == build_skill._VARIANT.sub("", source)
+
+
+def test_gemini_code_block_reads_like_the_scanner(tmp_path: Path) -> None:
+    from wcag_tool import engine
+
+    pdf = make_worksheet_pdf(tmp_path / "observation_worksheet.pdf")
+    before = hashlib.sha256(pdf.read_bytes()).hexdigest()
+    block = re.search(r"```python\n(.*?)```", _GEMINI_RUN.read_text(encoding="utf-8"), re.S)
+    assert block is not None
+    script = tmp_path / "block.py"
+    script.write_text(
+        block.group(1).replace('PATH = "the-file.pdf"', f"PATH = {str(pdf)!r}"), encoding="utf-8"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", str(script)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=tmp_path,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    lines = result.stdout.splitlines()
+    assert lines[:3] == ["tagged: False", "title: Field observation worksheet", "language: en-US"]
+    assert lines[3] == "page 1: pictures 1; fields 0, no name []; links []"
+    assert (
+        lines[4] == "page 2: pictures 0; fields 3, no name ['Text Field0', 'Text Field1']; links []"
+    )
+    # The block and the scanner agree on which pages draw pictures and hold unnamed fields.
+    findings = engine.scan(pdf).findings
+    for check, pattern in (
+        ("pdf.picture-untagged", r"^page (\d+): pictures [1-9]"),
+        ("pdf.form-field-no-name", r"^page (\d+): .*no name \['"),
+    ):
+        scanner = {f.locator for f in findings if f.check == check}
+        block_pages = {f"page {m.group(1)}" for m in re.finditer(pattern, result.stdout, re.M)}
+        assert scanner == block_pages, check
+    # Read-only: the file is unchanged and nothing new was written beside it.
+    assert hashlib.sha256(pdf.read_bytes()).hexdigest() == before
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["block.py", "observation_worksheet.pdf"]

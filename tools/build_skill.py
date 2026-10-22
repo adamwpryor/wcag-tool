@@ -19,8 +19,9 @@ The rules live as data in ``src/wcag_tool/rules/``. The skill's prose lives in
      conversation evals, and the realistic course pack some evals attach).
      Fixed timestamps, so an unchanged source produces a byte-identical archive.
    * ``dist/<slug>-gemini.zip`` -- the same skill for Gemini, whose skills cannot
-     run code: ``SKILL.md`` without its run-code paragraph, ``references/`` and
-     ``rules/``. No scanner and no test kit; Gemini reads every file by eye.
+     run the files they carry: ``SKILL.md`` with its run-code paragraph replaced by
+     ``gemini/run-code.md`` (one read-only PDF block a Thinking model can run) and
+     its tool-only parts removed, ``references/`` and two rule files. No test kit.
    * ``dist/<slug>-bot/`` -- the BoodleBox pack: ``instructions.md`` for the
      instruction field, built from ``bot/instructions.md`` with the rules and the
      shared session flow spliced in from SKILL.md; ``greeting.md`` for the greeting field;
@@ -310,10 +311,12 @@ def _bot_pack(skill_dir: Path, out: Path) -> list[Path]:
 
 
 def gemini_skill_md(skill_dir: Path) -> str:
-    """SKILL.md as the Gemini pack carries it: each marked variant paragraph removed.
+    """SKILL.md as the Gemini pack carries it: each marked variant replaced or removed.
 
-    Gemini skills cannot run code, so the paragraph about running the scanner is left
-    out and the skill reads every file by eye, as the no-code path in SKILL.md says.
+    A variant with a file of its name in ``gemini/`` is replaced by that file; the rest
+    are removed. Gemini skills cannot run the files they carry, but Gemini's Thinking
+    models write and run their own code, so ``gemini/run-code.md`` gives them one
+    read-only block to run instead of the scanner.
 
     Args:
         skill_dir: The folder holding SKILL.md.
@@ -327,7 +330,13 @@ def gemini_skill_md(skill_dir: Path) -> str:
     text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
     if not _VARIANT.search(text):
         raise ValueError("SKILL.md marks no variant for the Gemini pack")
-    return _VARIANT.sub("", text)
+    gemini = _repo_root() / "gemini"
+
+    def swap(match: re.Match[str]) -> str:
+        source = gemini / f"{match.group(1)}.md"
+        return source.read_text(encoding="utf-8").strip() + "\n\n" if source.is_file() else ""
+
+    return _VARIANT.sub(swap, text)
 
 
 def gemini_files(skill_dir: Path) -> list[tuple[str, bytes]]:
