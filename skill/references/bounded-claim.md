@@ -33,7 +33,7 @@ files it ran on.
 
 ## The claim with no tool connected
 
-> These files were read as text against the triage checklist. Nothing was modified. The checks
+> These files were read page by page against the triage checklist. Nothing was modified. The checks
 > that need the file open in its application were not done and are listed as not evaluated. The
 > findings are routed to named owners. A clean read is not a conformance claim.
 

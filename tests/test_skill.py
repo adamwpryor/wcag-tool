@@ -299,8 +299,11 @@ def test_gemini_pack_is_prose_and_rules_only() -> None:
     assert not [n for n in files if n.endswith((".py", ".sh"))]
     assert not [n for n in files if n.startswith(("scripts/", "tests/", "scanner/"))]
     assert "TESTING.md" not in files
-    for wanted in ("references/criteria.md", "rules/checks.json", "rules/wcag21.json"):
+    for wanted in ("references/criteria.md", "rules/checks.json", "rules/coverage.json"):
         assert wanted in files, wanted
+    # Everything Gemini loads sits in front of the file it reads: nothing it does not need.
+    for unneeded in ("README.md", "rules/wcag21.json", "rules/checks.schema.json"):
+        assert unneeded not in files, unneeded
     skill = files["SKILL.md"].decode("utf-8")
     assert "scripts/" not in skill and "variant:" not in skill
     # The run-code paragraph and every part that needs the wcag-tool are left out.

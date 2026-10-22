@@ -334,7 +334,10 @@ def gemini_files(skill_dir: Path) -> list[tuple[str, bytes]]:
     """Every (archive path, bytes) pair in the Gemini skill zip.
 
     Gemini skills cannot run code, so ``scripts/`` and the test kit stay out: the pack
-    is the prose, the reference pages and the rules.
+    is the prose, the reference pages and the two rule files the BoodleBox bot carries.
+    Everything Gemini loads sits in front of the file it is reading, so the README (for
+    people), the schemas and ``wcag21.json`` (whose text ``criteria.md`` already holds)
+    stay out too.
 
     Args:
         skill_dir: The folder holding SKILL.md.
@@ -343,12 +346,10 @@ def gemini_files(skill_dir: Path) -> list[tuple[str, bytes]]:
         Archive paths relative to the skill folder, with their bytes.
     """
     out = [("SKILL.md", gemini_skill_md(skill_dir).encode("utf-8"))]
-    if (skill_dir / "README.md").is_file():
-        out.append(("README.md", (skill_dir / "README.md").read_bytes()))
     for path in sorted((skill_dir / "references").glob("*.md")):
         out.append((f"references/{path.name}", path.read_bytes()))
-    for path in sorted(_rules_dir().glob("*.json")):
-        out.append((f"rules/{path.name}", path.read_bytes()))
+    for name in _BOT_RULES:
+        out.append((f"rules/{name}", (_rules_dir() / name).read_bytes()))
     return out
 
 

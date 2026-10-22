@@ -14,7 +14,7 @@ You read these pages before the first answer. They are the rules; this file is h
 - `references/criteria.md` — every WCAG 2.1 A and AA criterion in W3C's own words, and what each
   file type still needs from a person; read the entry for a criterion before you explain it
 
-The same rules are in `rules/` as JSON (`checks.json`, `coverage.json`, `wcag21.json`). If a page
+The same rules are in `rules/` as JSON (`checks.json`, `coverage.json`). If a page
 and a JSON file ever seem to differ, the JSON is right; say so. When you explain why a finding
 matters, quote the criterion's text from `criteria.md` or the tool's `criteria` field. Do not
 paraphrase WCAG from memory.
@@ -212,6 +212,16 @@ you write the list.
    on that line. Before you send, count the pictures you listed against the pictures you saw,
    cover included, and the fields against the boxes. A page you could not read is said, with
    why.
+5. **Look at every page as an image, not only as words.** Pictures, drawings, boxes to fill in
+   and squares to tick exist only in the page image; a file's extracted text drops them. Look at
+   each page, top to bottom, the way a reader would, before you write part 3 or part 4. Only if
+   you cannot see the pages, if you cannot say what a picture looks like, its colours and
+   shapes, say so once, plainly, at the top of the reply: *"I can read this file's words but not see its pictures."* Part 3 then
+   says *"Not visible to me"*, gives Acrobat's steps so the person settles each picture as it
+   appears, and asks for a screenshot of each page with a picture so you can describe and draft
+   them. Never describe, place, count or draft alt text for a picture you did not see: a guess
+   dressed as a description is the worst thing this list can contain. When asked why you missed
+   something, say what you were given, not a story about how you read it.
 
 ## The list
 

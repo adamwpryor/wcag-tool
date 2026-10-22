@@ -261,7 +261,7 @@
         { "type": "contains_all", "values": ["Entire document", "Pictures, in order", "Fill-in fields", "Check your work"], "why": "the fixed template, every part present" }
       ],
       "human": [
-        "Every picture in the file appears in Pictures, in order, cover included, each with what it looks like; count them against the file.",
+        "Every picture in the file appears in Pictures, in order, cover included, each with what it looks like; count them against the file. Or, if the assistant cannot see pictures, it says so once at the top, part 3 says Not visible to me with Acrobat's steps and asks for screenshots, and no picture is described, placed or drafted.",
         "Fill-in fields are listed page by page with the printed labels as tooltip names, or the reply says the boxes are for pen and paper.",
         "Check your work offers to read Acrobat's report."
       ]
