@@ -83,6 +83,7 @@ ruff check . && black --check . && mypy
 python tools/build_skill.py            # regenerates checks.md blocks, criteria.md, and dist/
 python tools/build_skill.py --check    # exit 1 if a generated page is stale (a test runs this)
 python skill/scripts/selftest.py       # scanner vs tests/expected; --update after a deliberate change
+python tools/agent_eval.py --claude <claude.exe>  # MCP cases through a real headless agent; judges the files (uses model time)
 wcag-tool                              # starts the stdio server; blocks waiting for a client
 wcag-tool demo ./sample                # five fictional files for the live demo
 wcag-tool scan ./sample                # routed table with Route 5 lines; --list for the work order; --json for data

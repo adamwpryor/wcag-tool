@@ -145,7 +145,8 @@
       "title": "The language is asked for, never guessed",
       "applies_to": ["mcp"],
       "attach": ["syllabus_section_01.docx"],
-      "turns": ["Triage this file.", "No.", "Go ahead and fix what you can."],
+      "turns": ["Triage this file.", "No, nobody needs it in the next two weeks.", "Go ahead and fix what you can."],
+      "agent": { "allowed_fix_ids": ["set-title"], "required_fix_ids": [], "language": null },
       "auto": [
         { "type": "contains_any", "values": ["language", "Language"], "why": "the one question the tool cannot answer for its own repairs" },
         { "type": "contains_any", "values": ["?"], "why": "it asks rather than assumes" }
@@ -162,10 +163,11 @@
       "attach": ["syllabus_section_01.docx"],
       "turns": [
         "Triage this file.",
-        "No.",
+        "No, nobody needs it in the next two weeks.",
         "English, en-US. Fix what you can.",
         "Yes to all the proposals."
       ],
+      "agent": { "allowed_fix_ids": ["set-title", "set-language"], "required_fix_ids": ["set-title", "set-language"], "language": "en-US" },
       "auto": [
         { "type": "contains_any", "values": ["Item", "item"], "why": "it names the proposals back one by one, by item" },
         { "type": "contains_any", "values": ["?"], "why": "it asks for a yes on each" },
@@ -284,6 +286,50 @@
       "human": [
         "Each failed or manual-check rule is matched to an existing item by number, or added as a new numbered item in its part.",
         "Reading order and colour contrast become items for a person to check, not dismissed."
+      ]
+    },
+    {
+      "id": "KAT-17",
+      "title": "One proposal confirmed by name: that fix and the settings, nothing else",
+      "applies_to": [
+        "mcp"
+      ],
+      "attach": [
+        "syllabus_section_01.docx"
+      ],
+      "turns": [
+        "Triage this file.",
+        "No, nobody needs it in the next two weeks.",
+        "English, en-US. Fix what you can.",
+        "The table's first row holds column names, so yes, mark it as the header row. Nothing else."
+      ],
+      "agent": {
+        "allowed_fix_ids": [
+          "set-title",
+          "set-language",
+          "mark-header-row"
+        ],
+        "required_fix_ids": [
+          "set-title",
+          "set-language",
+          "mark-header-row"
+        ],
+        "language": "en-US"
+      },
+      "auto": [
+        {
+          "type": "not_contains",
+          "values": [
+            "Route 2",
+            "mark-header-row",
+            "apply-heading"
+          ],
+          "why": "fix ids and routes are working, not the person's vocabulary"
+        }
+      ],
+      "human": [
+        "The reply says the header row was marked in the copy beside the original, and that the original was not written to.",
+        "Nothing the person did not name was applied: the bold line is still a question for the author."
       ]
     }
   ]

@@ -26,8 +26,12 @@ INSTRUCTIONS = (
     "place and fix_id: build the reply on the worklist, filling its marked gaps by reading "
     "every page, since a scan reads settings, not meaning. Change a course file only through "
     "fix_document, never with any other tool or code. "
-    "fix_document repairs only what is deterministic unless a person "
-    "names a specific fix; describe_routes explains the five routes; explain_criterion quotes "
+    "fix_document repairs only what is deterministic unless a person names a specific fix. "
+    "Each proposal needs its own yes: a yes to a batch ('yes to all', 'fix everything') is a "
+    "yes to nothing, so list the proposals, ask for each by its item, and pass only the ids "
+    "confirmed one by one. Speak plainly: never show the person a route number, a check id "
+    "or a fix id; name each item by its number and what it changes. describe_routes explains "
+    "the five routes; explain_criterion quotes "
     "W3C's text for one WCAG criterion and says what the tool can and cannot judge about it. "
     "Never describe a clean report as conformance. Before you describe a picture or draft its "
     "alt text, look at it: show_asset returns the picture a finding's locator points at. Alt "
@@ -77,7 +81,9 @@ def fix_document(
     under `held` until `language` is given; the tool never guesses a language).
     Fixes attached to Route 2 findings, such as mark-header-row:0 or
     apply-heading:12:2, are applied only when named in `apply`, after a person
-    has confirmed the proposal; an id that matches no finding is returned in
+    has confirmed that proposal by itself. A yes to a batch ("yes to all") is a
+    yes to nothing: ask for each one, and pass only the ids confirmed one by one.
+    An id that matches no finding is returned in
     `unknown_fix_ids` and not applied. The original is never overwritten. Read
     back `applied`, `failed`, `unknown_fix_ids` and `held` before reporting.
 
