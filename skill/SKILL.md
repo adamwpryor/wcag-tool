@@ -127,7 +127,7 @@ numbers and counts win over your own reading, and a setting it reports (or does 
 a check it ran) needs no "I can't see whether".
 
 **If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document`,
-`describe_routes` and `explain_criterion`), run `scan_folder` on the folder when there is more
+`show_asset`, `describe_routes` and `explain_criterion`), run `scan_folder` on the folder when there is more
 than one file, otherwise `scan_document` on the file. Each finding has a `locator` (where it is:
 `slide 4, Picture 2`, `paragraph 13`, `table 0`, `pages 1-2`) and `evidence` (what the check
 found). Use them to put the finding at its place in the list, said the way a person would find
@@ -141,6 +141,11 @@ its file, place and `fix_id`; renumber as you add items and keep each id with it
 a *fix it once in the template* item. The result's `criteria` field
 quotes W3C's text for every criterion a finding names; use it, or `explain_criterion`, when the
 author asks why.
+
+Before you describe a picture or draft its alt text, look at it: `show_asset` with the file and a
+finding's `locator` returns the picture itself (for a PDF page, every picture the page draws).
+One picture at a time, describe what you see, then Decorative or a DRAFT. A drawing made of
+shapes cannot be shown; `show_asset` says so, and you look for it on the page instead.
 
 <!-- /variant:tool -->
 <!-- variant:run-code -->

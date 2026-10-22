@@ -15,6 +15,7 @@ EXPECTED_TOOLS = {
     "scan_folder",
     "describe_routes",
     "explain_criterion",
+    "show_asset",
 }
 
 
@@ -37,6 +38,20 @@ def test_tools_in_memory(bad_docx: Path) -> None:
             # The work order travels with every scan, with the map an agent applies fixes by.
             assert "**1 · Entire document**" in data["worklist"]
             assert any(i["fix_id"] for i in data["worklist_items"])
+            # The picture a finding points at comes back as an image, with where it is.
+            picture = next(f for f in data["findings"] if f["check"] == "docx.image-missing-alt")
+            shown = await client.call_tool(
+                "show_asset", {"path": str(bad_docx), "locator": picture["locator"]}
+            )
+            assert not shown.is_error
+            kinds = [block.type for block in shown.content]
+            assert kinds == ["text", "image"]
+            assert shown.content[0].text == picture["locator"]
+            assert shown.content[1].mime_type == "image/png"
+            missing = await client.call_tool(
+                "show_asset", {"path": str(bad_docx), "locator": "Picture 99"}
+            )
+            assert "No picture named" in missing.content[0].text
             routes = await client.call_tool("describe_routes", {})
             assert "Five routes" in routes.content[0].text
             explained = _structured(

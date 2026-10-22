@@ -18,6 +18,7 @@ from pypdf.generic import (
     ArrayObject,
     ContentStream,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     PdfObject,
     StreamObject,
@@ -67,38 +68,56 @@ def _image_count(page: DictionaryObject) -> int:
     return count
 
 
-def _pictures_drawn(
+def _drawn_images(
     reader: PdfReader, owner: PdfObject | None, resources: PdfObject | None, seen: set[int]
-) -> int:
-    """Count the images a content stream actually draws, following form XObjects.
+) -> list[int | None]:
+    """The images a content stream actually draws, following form XObjects.
 
-    Counting the resource dictionary is not enough: some exporters (WeasyPrint is
+    Reading the resource dictionary is not enough: some exporters (WeasyPrint is
     one) give every page the same dictionary, so each page would appear to hold
     every picture in the file.
+
+    Returns:
+        One entry per image drawn, in drawing order: its object number, or None for
+        an image that is not an indirect object.
     """
     resources = _resolve(resources)
     if not isinstance(resources, DictionaryObject):
-        return 0
+        return []
     xobjects = _resolve(resources.get("/XObject"))
     if owner is None or not isinstance(xobjects, DictionaryObject):
-        return 0
+        return []
     try:
         operations = ContentStream(owner, reader).operations
     except (PdfReadError, ValueError):
-        return 0
-    count = 0
+        return []
+    drawn: list[int | None] = []
     for operands, operator in operations:
         if operator != b"Do" or not operands or operands[0] not in xobjects:
             continue
-        xobject = _resolve(xobjects[operands[0]])
+        ref = xobjects.raw_get(operands[0])
+        xobject = _resolve(ref)
         if not isinstance(xobject, StreamObject):
             continue
         if xobject.get("/Subtype") == "/Image":
-            count += 1
+            drawn.append(ref.idnum if isinstance(ref, IndirectObject) else None)
         elif xobject.get("/Subtype") == "/Form" and id(xobject) not in seen:
             seen.add(id(xobject))
-            count += _pictures_drawn(reader, xobject, xobject.get("/Resources") or resources, seen)
-    return count
+            drawn += _drawn_images(reader, xobject, xobject.get("/Resources") or resources, seen)
+    return drawn
+
+
+def drawn_images(reader: PdfReader, page: PageObject) -> list[int | None]:
+    """The images one page draws, in order, by object number.
+
+    Args:
+        reader: The open PDF.
+        page: One of its pages.
+
+    Returns:
+        One entry per image drawn; None for an image that is not an indirect object.
+    """
+    return _drawn_images(reader, page.get_contents(), page.get("/Resources"), set())
 
 
 def _unnamed_fields(page: PageObject) -> list[str]:
@@ -193,7 +212,7 @@ def scan(path: Path) -> Report:
     # text is a scan, which pdf.scanned-no-text already covers.
     for number, page in enumerate(reader.pages, start=1):
         if not tagged and (page.extract_text() or "").strip():
-            pictures = _pictures_drawn(reader, page.get_contents(), page.get("/Resources"), set())
+            pictures = len(drawn_images(reader, page))
             if pictures:
                 f.append(
                     Finding.from_check(

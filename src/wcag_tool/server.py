@@ -1,7 +1,8 @@
-"""The MCP server: five tools over stdio.
+"""The MCP server: six tools over stdio.
 
-Runs locally. Files never leave the machine; the only thing that crosses the
-wire is the report. Any MCP client with its own model and API key can use it.
+Runs locally. Files never leave the machine; what crosses the wire to the
+client's model is the report and, when show_asset is asked for one, a picture
+from the file. Any MCP client with its own model and API key can use it.
 """
 
 from __future__ import annotations
@@ -11,8 +12,9 @@ from pathlib import Path
 from typing import Any
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver import Image
 
-from wcag_tool import engine, log, rules
+from wcag_tool import assets, engine, log, rules
 from wcag_tool.findings import ROUTES_SUMMARY
 from wcag_tool.report import Batch, worklist_fields
 
@@ -27,8 +29,10 @@ INSTRUCTIONS = (
     "fix_document repairs only what is deterministic unless a person "
     "names a specific fix; describe_routes explains the five routes; explain_criterion quotes "
     "W3C's text for one WCAG criterion and says what the tool can and cannot judge about it. "
-    "Never describe a clean report as conformance. Alt text is always a proposal for a person "
-    "to confirm. Explain a criterion from its quoted text, not from memory."
+    "Never describe a clean report as conformance. Before you describe a picture or draft its "
+    "alt text, look at it: show_asset returns the picture a finding's locator points at. Alt "
+    "text is always a proposal for a person to confirm. Explain a criterion from its quoted "
+    "text, not from memory."
 )
 
 mcp = MCPServer("wcag-tool", instructions=INSTRUCTIONS)
@@ -109,6 +113,31 @@ def scan_folder(path: str, recursive: bool = True) -> dict[str, Any]:
         recursive: Descend into subfolders. Defaults to true.
     """
     return engine.scan_folder(_path(path), recursive=recursive).to_dict()
+
+
+@mcp.tool()
+def show_asset(path: str, locator: str) -> list[str | Image]:
+    """Show the picture a finding points at, so alt text is drafted from looking.
+
+    Pass a finding's `locator` from a scan: `Picture 1` (Word), `slide 4, Picture 2`
+    (PowerPoint), or `page 3` (PDF, which returns every picture that page draws).
+    Each picture comes with a line saying where it is. Look before you describe a
+    picture or draft its alt text; the draft is still a proposal the author confirms.
+    A drawing made of shapes, such as a logo drawn in a PDF, is not a picture in the
+    file and cannot be shown: the reply says so. Reads the file; writes nothing.
+
+    Args:
+        path: The course file on this machine.
+        locator: The finding's locator, exactly as the scan gave it.
+    """
+    try:
+        pictures = assets.extract(_path(path), locator)
+    except assets.AssetError as error:
+        return [str(error)]
+    out: list[str | Image] = []
+    for picture in pictures:
+        out += [picture.label, Image(data=picture.data, format=picture.format)]
+    return out
 
 
 @mcp.tool()

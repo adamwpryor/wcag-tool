@@ -100,7 +100,8 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --list
 | `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |
 | `demo.py` | minimal fictional fixture files, shared by tests, the selftest and the `demo` command |
 | `course_pack.py` | a realistic fictional course pack for testing the bot by hand; built into `dist/wcag-triage-bot/test-files/` |
-| `server.py` | the five MCP tools |
+| `assets.py` | the picture a finding's locator points at, as an image (read-only), for `show_asset` |
+| `server.py` | the six MCP tools |
 | `cli.py` | the console entry point |
 
 ## Adding a check

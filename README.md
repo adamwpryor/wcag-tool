@@ -179,7 +179,8 @@ In Claude Code, put this in the project's `.claude/settings.json`:
       "mcp__wcag-tool__scan_document",
       "mcp__wcag-tool__scan_folder",
       "mcp__wcag-tool__describe_routes",
-      "mcp__wcag-tool__explain_criterion"
+      "mcp__wcag-tool__explain_criterion",
+      "mcp__wcag-tool__show_asset"
     ],
     "ask": ["mcp__wcag-tool__fix_document"]
   }
