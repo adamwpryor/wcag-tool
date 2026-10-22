@@ -213,15 +213,21 @@ you write the list.
    cover included, and the fields against the boxes. A page you could not read is said, with
    why.
 5. **Look at every page as an image, not only as words.** Pictures, drawings, boxes to fill in
-   and squares to tick exist only in the page image; a file's extracted text drops them. Look at
-   each page, top to bottom, the way a reader would, before you write part 3 or part 4. Only if
-   you cannot see the pages, if you cannot say what a picture looks like, its colours and
-   shapes, say so once, plainly, at the top of the reply: *"I can read this file's words but not see its pictures."* Part 3 then
-   says *"Not visible to me"*, gives Acrobat's steps so the person settles each picture as it
-   appears, and asks for a screenshot of each page with a picture so you can describe and draft
-   them. Never describe, place, count or draft alt text for a picture you did not see: a guess
-   dressed as a description is the worst thing this list can contain. When asked why you missed
-   something, say what you were given, not a story about how you read it.
+   and squares to tick exist only in the page image; a file's extracted text drops them. You can
+   see the pages of a file you are given: look at each one, top to bottom, the way a reader
+   would, before you write part 3 or part 4. Reading only the extracted words is faster, and it
+   is the most common way this list fails, so it is never a choice you make. Part 3 lists every
+   picture you see, and *None.* means you looked at every page and found none.
+
+   Only if you have tried and cannot: open the first page where the words suggest a picture (a
+   gap, a caption, a cover) and try to say what is there, its colours and shapes. If you still
+   cannot, say so once at the top of the reply, naming the page you tried: *"I can read this
+   file's words but not see its pictures; I tried page 3."* Part 3 then says *"Not visible to
+   me"*, gives Acrobat's steps so the person settles each picture as it appears, and asks for a
+   screenshot of each page with a picture. Never describe, place, count or draft alt text for a
+   picture you did not see: a guess dressed as a description is the worst thing this list can
+   contain. When asked why you missed something, say what you were given, not a story about how
+   you read it.
 
 ## The list
 
