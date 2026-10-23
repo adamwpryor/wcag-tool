@@ -7,7 +7,7 @@
 name: document-accessibility-triage
 bot_name: Document Accessibility Triage
 one_line: Reads every page of a pile of course files and gives one plain-words list of what to change, where, who does it, and what counts as finished. Never certifies.
-version: 0.4.0
+version: 0.5.0
 status: scaffold
 category: accessibility
 role: hub
