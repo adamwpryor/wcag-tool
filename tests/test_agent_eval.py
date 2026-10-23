@@ -37,6 +37,36 @@ def _fix_id(path: Path, kind: str) -> str:
     )
 
 
+def test_the_agent_runs_without_api_keys_unless_asked(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+        monkeypatch.setenv(name, "not-a-real-key")
+    monkeypatch.setenv("PATH_MARKER", "kept")
+    env = agent_eval.agent_env()
+    assert "ANTHROPIC_API_KEY" not in env and "GEMINI_API_KEY" not in env
+    assert env["PATH_MARKER"] == "kept"
+    assert agent_eval.agent_env(use_api_key=True)["ANTHROPIC_API_KEY"] == "not-a-real-key"
+
+
+@pytest.mark.parametrize(
+    ("status", "use_api_key", "refused"),
+    [
+        ({"loggedIn": True, "authMethod": "claude.ai", "subscriptionType": "max"}, False, False),
+        (
+            {"loggedIn": True, "authMethod": "claude.ai", "apiKeySource": "ANTHROPIC_API_KEY"},
+            False,
+            True,
+        ),
+        ({"loggedIn": True, "authMethod": "apiKey", "apiKeySource": "/login"}, False, True),
+        ({"loggedIn": False}, False, True),
+        ({"loggedIn": True, "authMethod": "claude.ai", "apiKeySource": "x"}, True, False),
+    ],
+)
+def test_a_run_refuses_anything_but_the_subscription(
+    status: dict, use_api_key: bool, refused: bool
+) -> None:
+    assert (agent_eval.login_problem(status, use_api_key) is not None) is refused
+
+
 def test_the_eval_lets_the_agent_use_every_server_tool() -> None:
     # A tool missing here is silently blocked in the live run, as extract_content once was.
     import asyncio

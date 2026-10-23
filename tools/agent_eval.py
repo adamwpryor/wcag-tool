@@ -12,8 +12,10 @@ script:
    invented, every agreed fix present, and each record matching a fresh scan of its copy.
 
 The agent's last reply is saved as ``<case>.run<n>.txt`` in ``--out`` so ``grade.py --for mcp``
-can grade the words too. Running it uses model time on whatever account Claude Code is signed
-in to, so nothing runs it automatically; ``tests/test_agent_eval.py`` tests the judge alone.
+can grade the words too. It runs on the Claude subscription login: API keys are removed from
+the agent's environment, and the run refuses to start unless ``claude auth status`` shows a
+subscription with no API key source (``--use-api-key`` opts into a billed run). It still uses
+plan time, so nothing runs it automatically; ``tests/test_agent_eval.py`` tests the judge alone.
 
 Example:
     python tools/agent_eval.py --claude path/to/claude.exe
@@ -61,6 +63,11 @@ ALLOWED_TOOLS = [
     "Grep",
 ]
 DENIED_TOOLS = ["Bash", "Edit", "Write", "NotebookEdit", "WebFetch", "WebSearch", "Agent"]
+
+# API keys stay out of the agent's environment unless --use-api-key is given, so the runs use
+# the Claude subscription login: headless Claude Code bills ANTHROPIC_API_KEY silently whenever
+# it is set.
+_API_KEY_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "GEMINI_API_KEY", "GOOGLE_API_KEY")
 
 # The only files an agent may add: a remediated copy and its record.
 _NEW_FILE = re.compile(r".+\.remediated\.(docx|pptx|pdf|remediation\.json)$")
@@ -158,6 +165,61 @@ def judge(folder: Path, before: dict[str, str], expect: Expectation) -> list[str
     return problems
 
 
+def agent_env(use_api_key: bool = False) -> dict[str, str]:
+    """The environment the agent runs in: this one, without model API keys unless asked."""
+    env = dict(os.environ)
+    if not use_api_key:
+        for name in _API_KEY_VARS:
+            env.pop(name, None)
+    return env
+
+
+def login_problem(status: dict[str, Any], use_api_key: bool = False) -> str | None:
+    """Why ``claude auth status`` output is not the login this run should use, or None.
+
+    Args:
+        status: The parsed JSON from ``claude auth status``.
+        use_api_key: True when the person asked for an API-key run.
+
+    Returns:
+        A sentence saying what is wrong, or None when the login is right.
+    """
+    if not status.get("loggedIn"):
+        return "Claude Code is not signed in; run `claude auth login` with the subscription."
+    if use_api_key:
+        return None
+    if status.get("apiKeySource"):
+        return (
+            f"Claude Code would use an API key from {status['apiKeySource']}, not the subscription."
+        )
+    if status.get("authMethod") != "claude.ai":
+        method = status.get("authMethod")
+        return f"Claude Code is signed in with {method!r}, not a Claude subscription."
+    return None
+
+
+def _check_login(claude: str, env: dict[str, str], use_api_key: bool) -> str | None:
+    """Ask Claude Code which login it will use, without calling a model; log it."""
+    done = subprocess.run(
+        [claude, "auth", "status"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env=env,
+        timeout=60,
+        check=False,
+    )
+    try:
+        status = json.loads(done.stdout)
+    except json.JSONDecodeError:
+        return f"Could not read `claude auth status`: {(done.stdout + done.stderr)[:200]}"
+    problem = login_problem(status, use_api_key)
+    if problem is None:
+        source = status.get("apiKeySource") or f"{status.get('subscriptionType')} subscription"
+        logger.info("Running on: %s (%s)", status.get("authMethod"), source)
+    return problem
+
+
 @dataclass
 class Turn:
     """One headless call: what was typed and what came back."""
@@ -169,7 +231,13 @@ class Turn:
 
 
 def _claude_turn(
-    claude: str, prompt: str, folder: Path, config: Path, session: str | None, extra: list[str]
+    claude: str,
+    prompt: str,
+    folder: Path,
+    config: Path,
+    session: str | None,
+    extra: list[str],
+    env: dict[str, str],
 ) -> tuple[Turn, str]:
     command = [
         claude,
@@ -194,6 +262,7 @@ def _claude_turn(
         capture_output=True,
         text=True,
         encoding="utf-8",
+        env=env,
         timeout=_TURN_TIMEOUT,
         check=False,
     )
@@ -210,7 +279,14 @@ def _claude_turn(
     return turn, str(data.get("session_id") or session or "")
 
 
-def run_case(case: dict[str, Any], claude: str, out: Path, run: int, extra: list[str]) -> list[str]:
+def run_case(
+    case: dict[str, Any],
+    claude: str,
+    out: Path,
+    run: int,
+    extra: list[str],
+    env: dict[str, str] | None = None,
+) -> list[str]:
     """Run one case once and return its problems; saves the transcript and the last reply.
 
     Args:
@@ -219,6 +295,7 @@ def run_case(case: dict[str, Any], claude: str, out: Path, run: int, extra: list
         out: Where transcripts and last replies go.
         run: The run number, for file names.
         extra: More arguments for every headless call (``--model``, a skill prompt).
+        env: The agent's environment; defaults to ``agent_env()``, with no API keys.
 
     Returns:
         The judge's problems, plus one line if a turn failed outright.
@@ -242,7 +319,9 @@ def run_case(case: dict[str, Any], claude: str, out: Path, run: int, extra: list
         turns: list[Turn] = []
         session: str | None = None
         for prompt in prompts:
-            turn, session = _claude_turn(claude, prompt, folder, config, session, extra)
+            turn, session = _claude_turn(
+                claude, prompt, folder, config, session, extra, env or agent_env()
+            )
             turns.append(turn)
             if turn.is_error:
                 break
@@ -275,12 +354,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--skill", action="store_true", help="also give the agent SKILL.md, as a skill would"
     )
+    parser.add_argument(
+        "--use-api-key",
+        action="store_true",
+        help="let Claude Code use an API key from the environment (billed); default is the "
+        "subscription login",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     # The judge re-scans copies; the package's own "scanned" lines are noise here.
     logging.getLogger("wcag_tool").setLevel(logging.WARNING)
     if not args.claude:
         logger.error("Claude Code not found: pass --claude or set CLAUDE_BIN.")
+        return 2
+    env = agent_env(args.use_api_key)
+    problem = _check_login(args.claude, env, args.use_api_key)
+    if problem:
+        logger.error("Not running: %s", problem)
         return 2
 
     cases = [c for c in json.loads(EVALS.read_text(encoding="utf-8"))["cases"] if "agent" in c]
@@ -296,7 +386,7 @@ def main(argv: list[str] | None = None) -> int:
     failed = 0
     for case in cases:
         for run in range(1, args.runs + 1):
-            problems = run_case(case, args.claude, args.out, run, extra)
+            problems = run_case(case, args.claude, args.out, run, extra, env)
             failed += bool(problems)
             status = "pass" if not problems else "FAIL"
             logger.info("%s run %d: %s", case["id"], run, status)
