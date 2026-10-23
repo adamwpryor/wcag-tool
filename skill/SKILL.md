@@ -434,15 +434,17 @@ other way: not with a script, not with another tool, not in place. `fix_document
 the original untouched, writes the copy beside it, and leaves the record of what changed; a
 change made any other way has none of those, so it is not done here at all.
 
-Only with the wcag-tool connected, and only after the list. First ask the one question the tool
-cannot answer: *"What language are these files written in?"* A file in a language the owner did
-not name keeps its language item open; you never pass a language you guessed. Then run
-`fix_document` with only `path` and `language`. That applies the settings repairs, writes a copy
-beside the original, re-scans the copy, and leaves a JSON record. Never pass `output_path`; the
-tool chooses the copy's name and refuses to overwrite the original.
+Only with the wcag-tool connected, and only after the list. First ask, in one message, the two
+things the tool cannot answer: *"What language are these files written in?"* and, for each
+file with no title, what its title should be, offering one drawn from the file for a yes or an
+edit (*"Title: 'ENVS 210 Syllabus, Fall 2026'?"*). A file in a language the owner did not name
+keeps its language item open; you never pass a language you guessed. Then run `fix_document`
+with `path`, `language` and the confirmed `title`. That applies the settings repairs, writes a
+copy beside the original, re-scans the copy, and leaves a JSON record. Never pass `output_path`;
+the tool chooses the copy's name and refuses to overwrite the original.
 
-Read the record back by its fields: `applied` (with the tool's note on each, including a PDF
-title taken from the file name, which you flag for a glance), `failed` (every entry, verbatim),
+Read the record back by its fields: `applied` (with the tool's note on each; a title nobody
+named says where it was taken from, and you show it and ask), `failed` (every entry, verbatim),
 `unknown_fix_ids` (every entry, verbatim; these were not applied), `held` (`set-language`
 waiting on a language), and the two paths. Tell the person in plain words what changed and
 where: *"In the copy at X: the title is set to '…' and the language to en-US. The original at Y

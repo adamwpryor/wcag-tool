@@ -20,7 +20,7 @@ from wcag_tool.report import Batch
 logger = logging.getLogger(__name__)
 
 Scanner = Callable[[Path], Report]
-Fixer = Callable[[Path, list[str], Path, str], dict]
+Fixer = Callable[[Path, list[str], Path, str, str | None], dict]
 
 _HANDLERS: dict[str, tuple[Scanner, Fixer]] = {
     ".docx": (docx_checks.scan, docx_fixes.apply),
@@ -163,6 +163,7 @@ def fix(
     apply: list[str] | None = None,
     output: Path | None = None,
     language: str | None = None,
+    title: str | None = None,
 ) -> dict[str, Any]:
     """Apply fixes to a copy of the file, re-scan it, and write a record.
 
@@ -179,6 +180,9 @@ def fix(
             Must not be the original.
         language: Language code for ``set-language`` (``en-US``, ``es-ES``). When
             omitted, ``set-language`` is reported under ``held`` and left open.
+        title: The title the person named for ``set-title``. When omitted, the title is
+            taken from the file (a heading, the first slide title, or the file name) and
+            the applied note says where it came from and asks for a check.
 
     Returns:
         A record: paths, ``applied``, ``failed``, ``unknown_fix_ids``, ``held``,
@@ -217,13 +221,15 @@ def fix(
             to_apply.append(chosen or finding.fix_id)
     unknown = [r for r in requested if r not in matched]
 
-    result = fixer(path, to_apply, out, language or "en-US")
+    named_title = (title or "").strip() or None
+    result = fixer(path, to_apply, out, language or "en-US", named_title)
     after = scan(out)
 
     record = {
         "original": str(path),
         "output": str(out),
         "language": language,
+        "title": named_title,
         "applied": result["applied"],
         "failed": result["failed"],
         "unknown_fix_ids": unknown,

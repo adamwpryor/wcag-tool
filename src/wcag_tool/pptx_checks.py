@@ -96,14 +96,22 @@ def scan(path: Path) -> Report:
     return report
 
 
-def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US") -> dict:
+def apply(
+    path: Path,
+    fix_ids: list[str],
+    output: Path,
+    language: str = "en-US",
+    title: str | None = None,
+) -> dict:
     """Apply the named fixes and save to ``output``.
 
     Args:
         path: The original deck. Never overwritten.
-        fix_ids: Fix identifiers. Only ``set-title`` exists for decks today.
+        fix_ids: Fix identifiers: ``set-title`` and ``mark-header-row:<slide>:<shape>``.
         output: Where the remediated copy is written.
         language: Unused for decks; kept for a uniform signature.
+        title: The title a person named for ``set-title``; without one, it is taken from
+            the first slide title and the note says so.
 
     Returns:
         A dict with ``applied`` and ``failed``.
@@ -125,16 +133,23 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
             except (ValueError, IndexError) as exc:
                 failed[fix_id] = f"{type(exc).__name__}: {exc}"
         elif fix_id == "set-title":
-            first = next(
-                (
-                    s.shapes.title.text.strip()
-                    for s in prs.slides
-                    if s.shapes.title is not None and s.shapes.title.text.strip()
-                ),
-                path.stem.replace("_", " ").replace("-", " "),
-            )
+            if title:
+                prs.core_properties.title = title
+                applied[fix_id] = f"title set to {title!r}, as named"
+                continue
+            slide_titles = [
+                s.shapes.title.text.strip()
+                for s in prs.slides
+                if s.shapes.title is not None and s.shapes.title.text.strip()
+            ]
+            if slide_titles:
+                first, source = slide_titles[0], "the first slide title"
+            else:
+                first, source = path.stem.replace("_", " ").replace("-", " "), "the file name"
             prs.core_properties.title = first
-            applied[fix_id] = f"title set to {first!r}"
+            applied[fix_id] = (
+                f"title set to {first!r} from {source}; check it names the whole presentation"
+            )
         else:
             failed[fix_id] = "unknown fix"
     prs.save(str(output))

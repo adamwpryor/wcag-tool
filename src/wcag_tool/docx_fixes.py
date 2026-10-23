@@ -20,18 +20,22 @@ from wcag_tool.docx_checks import _heading_level, style_name
 DEFAULT_LANGUAGE = "en-US"
 
 
-def _title_from_content(doc: DocumentType, path: Path) -> str:
-    """Use the first Title or Heading 1 paragraph; otherwise a readable file stem."""
+def _title_from_content(doc: DocumentType, path: Path) -> tuple[str, str]:
+    """The first Title or Heading 1 paragraph, else a readable file stem, and where it came from."""
     for paragraph in doc.paragraphs:
         name = style_name(paragraph)
         if (name == "Title" or _heading_level(name) == 1) and paragraph.text.strip():
-            return paragraph.text.strip()
-    return re.sub(r"[_\-]+", " ", path.stem).strip()
+            return paragraph.text.strip(), f"the first {name} paragraph"
+    return re.sub(r"[_\-]+", " ", path.stem).strip(), "the file name"
 
 
-def _set_title(doc: DocumentType, path: Path) -> str:
-    doc.core_properties.title = _title_from_content(doc, path)
-    return f"title set to {doc.core_properties.title!r}"
+def _set_title(doc: DocumentType, path: Path, title: str | None = None) -> str:
+    if title:
+        doc.core_properties.title = title
+        return f"title set to {title!r}, as named"
+    guessed, source = _title_from_content(doc, path)
+    doc.core_properties.title = guessed
+    return f"title set to {guessed!r} from {source}; check it names the whole document"
 
 
 def _set_language(doc: DocumentType, code: str = DEFAULT_LANGUAGE) -> str:
@@ -71,7 +75,13 @@ def _apply_heading(doc: DocumentType, paragraph_index: int, level: int) -> str:
     return f"paragraph {paragraph_index}: Heading {level} applied"
 
 
-def apply(path: Path, fix_ids: list[str], output: Path, language: str = DEFAULT_LANGUAGE) -> dict:
+def apply(
+    path: Path,
+    fix_ids: list[str],
+    output: Path,
+    language: str = DEFAULT_LANGUAGE,
+    title: str | None = None,
+) -> dict:
     """Apply the named fixes and save to ``output``.
 
     Args:
@@ -79,6 +89,8 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = DEFAULT_
         fix_ids: Fix identifiers such as ``set-title`` or ``mark-header-row:0``.
         output: Where the remediated copy is written.
         language: Language code used by ``set-language``.
+        title: The title a person named for ``set-title``; without one, it is taken from
+            the document and the note says so.
 
     Returns:
         A dict with ``applied`` (fix id to description) and ``failed`` (fix id to reason).
@@ -90,7 +102,7 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = DEFAULT_
         name, _, args = fix_id.partition(":")
         try:
             if name == "set-title":
-                applied[fix_id] = _set_title(doc, path)
+                applied[fix_id] = _set_title(doc, path, title)
             elif name == "set-language":
                 applied[fix_id] = _set_language(doc, language)
             elif name == "mark-header-row":

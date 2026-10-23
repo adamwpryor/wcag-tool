@@ -77,12 +77,17 @@ def fix_document(
     apply: list[str] | None = None,
     output_path: str | None = None,
     language: str | None = None,
+    title: str | None = None,
 ) -> dict[str, Any]:
     """Write a remediated copy of the file and a JSON record of before and after.
 
     Route 1 fixes are applied by default: the document title, and the document
     language once a person has named it (set-language is held and reported
     under `held` until `language` is given; the tool never guesses a language).
+    Pass the title the person wants in `title`. Without it, the title is taken
+    from the file (a heading, the first slide title, or the file name), and the
+    applied note says where it came from: show it to the person, and if it does
+    not name the whole file, ask for the title and run again with `title`.
     Fixes attached to Route 2 findings, such as mark-header-row:0 or
     apply-heading:12:2, are applied only when named in `apply`, after a person
     has confirmed that proposal by itself. A yes to a batch ("yes to all") is a
@@ -98,12 +103,15 @@ def fix_document(
             Leave it unset; it must never be the original.
         language: Language code for set-language, e.g. en-US or es-ES, as named
             by the person who owns the file.
+        title: The document title, as the person named it, e.g. "ENVS 210 Syllabus,
+            Fall 2026". Used exactly as given.
     """
     return engine.fix(
         _path(path),
         apply=apply,
         output=_path(output_path) if output_path else None,
         language=language,
+        title=title,
     )
 
 

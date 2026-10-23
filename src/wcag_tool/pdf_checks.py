@@ -244,7 +244,13 @@ def scan(path: Path) -> Report:
     return report
 
 
-def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US") -> dict:
+def apply(
+    path: Path,
+    fix_ids: list[str],
+    output: Path,
+    language: str = "en-US",
+    title: str | None = None,
+) -> dict:
     """Apply the named metadata fixes and save to ``output``.
 
     Args:
@@ -252,6 +258,8 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
         fix_ids: ``set-title`` and ``set-language`` are the only fixes that exist for PDF.
         output: Where the copy is written.
         language: Language code used by ``set-language``.
+        title: The title a person named for ``set-title``; without one, it is taken from
+            the file name and the note says so.
 
     Returns:
         A dict with ``applied`` and ``failed``.
@@ -260,11 +268,14 @@ def apply(path: Path, fix_ids: list[str], output: Path, language: str = "en-US")
     applied: dict[str, str] = {}
     failed: dict[str, str] = {}
     for fix_id in fix_ids:
-        if fix_id == "set-title":
-            title = path.stem.replace("_", " ").replace("-", " ")
+        if fix_id == "set-title" and title:
             writer.add_metadata({"/Title": title})
+            applied[fix_id] = f"title set to {title!r}, as named"
+        elif fix_id == "set-title":
+            guessed = path.stem.replace("_", " ").replace("-", " ")
+            writer.add_metadata({"/Title": guessed})
             applied[fix_id] = (
-                f"title set to {title!r} from the file name; check it reads as a title"
+                f"title set to {guessed!r} from the file name; check it names the whole document"
             )
         elif fix_id == "set-language":
             writer.root_object[NameObject("/Lang")] = TextStringObject(language)

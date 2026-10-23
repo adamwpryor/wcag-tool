@@ -51,6 +51,11 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="language code for set-language (en-US, es-ES); without it the fix is held",
     )
+    fix.add_argument(
+        "--title",
+        default=None,
+        help="the document title to set; without it, one is taken from the file and flagged",
+    )
 
     demo = sub.add_parser("demo", help="write fictional files with known defects into a folder")
     demo.add_argument("directory", type=_path)
@@ -101,7 +106,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "fix":
             record = engine.fix(
-                args.path, apply=args.apply or None, output=args.output, language=args.language
+                args.path,
+                apply=args.apply or None,
+                output=args.output,
+                language=args.language,
+                title=args.title,
             )
             _write(json.dumps(record, indent=2))
             return 0
