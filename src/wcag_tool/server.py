@@ -1,4 +1,4 @@
-"""The MCP server: six tools over stdio.
+"""The MCP server: eight tools over stdio.
 
 Runs locally. Files never leave the machine; what crosses the wire to the
 client's model is the report and, when show_asset is asked for one, a picture
@@ -14,7 +14,7 @@ from typing import Any
 from mcp.server import MCPServer
 from mcp.server.mcpserver import Image
 
-from wcag_tool import assets, engine, log, rules
+from wcag_tool import assets, compare, content, engine, log, rules
 from wcag_tool.findings import ROUTES_SUMMARY
 from wcag_tool.report import Batch, worklist_fields
 
@@ -24,8 +24,12 @@ INSTRUCTIONS = (
     "Route 5 candidates. Both return `worklist`, the plain-words work order already laid out "
     "from the scan's facts, and `worklist_items`, which maps each item number to its file, "
     "place and fix_id: build the reply on the worklist, filling its marked gaps by reading "
-    "every page, since a scan reads settings, not meaning. Change a course file only through "
-    "fix_document, never with any other tool or code. "
+    "every page, since a scan reads settings, not meaning. extract_content gives you every "
+    "page's words and objects in order, under the scan's place names: read it before you "
+    "write the list. Change a course file only through fix_document, never with any other "
+    "tool or code. For a PDF with no source, if the person asks for a rebuilt copy, rebuild "
+    "it from extract_content into a new tagged file beside the original, and check it with "
+    "compare_rebuild before calling it anything; the original is never touched. "
     "fix_document repairs only what is deterministic unless a person names a specific fix. "
     "Each proposal needs its own yes: a yes to a batch ('yes to all', 'fix everything') is a "
     "yes to nothing, so list the proposals, ask for each by its item, and pass only the ids "
@@ -144,6 +148,48 @@ def show_asset(path: str, locator: str) -> list[str | Image]:
     for picture in pictures:
         out += [picture.label, Image(data=picture.data, format=picture.format)]
     return out
+
+
+@mcp.tool()
+def extract_content(path: str) -> dict[str, Any]:
+    """Return a document's words and objects, in reading order, so you can read every page.
+
+    One unit per page (PDF), per slide (PowerPoint), or for the whole Word document,
+    each with ordered blocks: headings, paragraphs, list items, tables (cells, and
+    whether a header row is marked), pictures (alt text, decorative), links (text
+    and target), fill-in fields (name, tooltip), speaker notes, headers and footers.
+    Places use the scan's names, so "Paragraph 14" here is item "Paragraph 14" in the
+    worklist. It reports what the file marks and guesses no role it does not: an
+    untagged PDF has text, not headings. Reads the file; writes nothing.
+
+    Args:
+        path: The course file on this machine.
+    """
+    return content.extract(_path(path))
+
+
+@mcp.tool()
+def compare_rebuild(original: str, rebuilt: str, ignore: list[str] | None = None) -> dict[str, Any]:
+    """Check a rebuilt copy against its original before anyone relies on it.
+
+    For a PDF with no source that an agent rebuilt from extract_content into a new
+    tagged file. Checks: every word of the original in the rebuild, in order, nothing
+    added (differences in `words.missing` and `words.added`, verbatim); the same number
+    of pictures, and every figure in the rebuild's tags with alt text; every link
+    target kept; the same fill-in fields, each now named; and a scan of the rebuild.
+    `problems` lists what to resolve; report each to the person. Even with no
+    problems, the rebuild is not a conformance claim: say `claim`, word for word or
+    shorter. A scanned original has no text to compare, and a person must read the
+    rebuild against it. Reads both files; writes nothing.
+
+    Args:
+        original: The file the rebuild was made from.
+        rebuilt: The rebuilt copy, a different file.
+        ignore: Phrases to leave out of the word check on both sides, such as a running
+            footer the rebuild does not repeat on every page. Tell the person what you
+            left out.
+    """
+    return compare.compare(_path(original), _path(rebuilt), ignore)
 
 
 @mcp.tool()

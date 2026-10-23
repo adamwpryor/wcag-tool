@@ -55,8 +55,11 @@ sponsor material, or anything from a real course file.
    named in `apply`.
 3. **The original file is never overwritten.** `engine.fix` writes `<stem>.remediated<ext>` and a
    `.remediation.json` record beside it.
-4. **PDF tagging is out of scope.** The tool says so in the words from `checks.md`. Do not add a
-   fix that implies otherwise.
+4. **The tool never tags an existing PDF.** It says so in the words from `checks.md`, and no
+   fix may imply otherwise. For a PDF with no source, an agent may rebuild it from
+   `extract_content` into a new tagged file beside the original; `compare_rebuild` checks that
+   every word, picture, link and field survived, and the claim stays bounded (DECISIONS §14).
+   Third-party material goes to disability services, not to a rebuild.
 5. **Not evaluated is reported, never silently passed.** Every scanner module keeps an
    `EVALUATED` and a `NOT_EVALUATED` list and they ship in every report.
 6. **No real course file enters the repo.** Tests build fixtures in `tmp_path`. `.gitignore`
@@ -102,7 +105,9 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --list
 | `demo.py` | minimal fictional fixture files, shared by tests, the selftest and the `demo` command |
 | `course_pack.py` | a realistic fictional course pack for testing the bot by hand; built into `dist/wcag-triage-bot/test-files/` |
 | `assets.py` | the picture a finding's locator points at, as an image (read-only), for `show_asset` |
-| `server.py` | the six MCP tools |
+| `content.py` | a document's words and objects in reading order, under the scan's place names (read-only), for `extract_content` and as the source of a rebuild |
+| `compare.py` | a rebuilt PDF checked against its original: words verbatim, pictures and figure alt text, link targets, fields, a scan of the rebuild |
+| `server.py` | the eight MCP tools |
 | `cli.py` | the console entry point |
 
 ## Adding a check

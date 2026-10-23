@@ -16,6 +16,8 @@ EXPECTED_TOOLS = {
     "describe_routes",
     "explain_criterion",
     "show_asset",
+    "extract_content",
+    "compare_rebuild",
 }
 
 
@@ -52,6 +54,10 @@ def test_tools_in_memory(bad_docx: Path) -> None:
                 "show_asset", {"path": str(bad_docx), "locator": "Picture 99"}
             )
             assert "No picture named" in missing.content[0].text
+            # Every page's words come back under the scan's place names.
+            words = _structured(await client.call_tool("extract_content", {"path": str(bad_docx)}))
+            places = {b["where"] for u in words["units"] for b in u["blocks"]}
+            assert "Paragraph 2" in places and "Table 1" in places
             routes = await client.call_tool("describe_routes", {})
             assert "Five routes" in routes.content[0].text
             explained = _structured(

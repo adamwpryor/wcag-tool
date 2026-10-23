@@ -37,6 +37,17 @@ def _fix_id(path: Path, kind: str) -> str:
     )
 
 
+def test_the_eval_lets_the_agent_use_every_server_tool() -> None:
+    # A tool missing here is silently blocked in the live run, as extract_content once was.
+    import asyncio
+
+    from wcag_tool.server import mcp
+
+    names = {t.name for t in asyncio.run(mcp.list_tools())}
+    allowed = {t.split("__")[-1] for t in agent_eval.ALLOWED_TOOLS if t.startswith("mcp__")}
+    assert allowed == names
+
+
 def test_every_agent_case_names_only_fixes_the_tool_offers() -> None:
     assert {"KAT-9", "KAT-10", "KAT-17"} <= set(_CASES)
     known = {"set-title", "set-language", "mark-header-row", "apply-heading"}

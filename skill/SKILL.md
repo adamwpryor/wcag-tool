@@ -126,8 +126,9 @@ scan with few findings is never a reason to read less. What a scan does find is 
 numbers and counts win over your own reading, and a setting it reports (or does not report, for
 a check it ran) needs no "I can't see whether".
 
-**If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `fix_document`,
-`show_asset`, `describe_routes` and `explain_criterion`), run `scan_folder` on the folder when there is more
+**If the wcag-tool is connected** (you have `scan_document`, `scan_folder`, `extract_content`,
+`show_asset`, `fix_document`, `compare_rebuild`, `describe_routes` and `explain_criterion`), run
+`scan_folder` on the folder when there is more
 than one file, otherwise `scan_document` on the file. Each finding has a `locator` (where it is:
 `slide 4, Picture 2`, `paragraph 13`, `table 0`, `pages 1-2`) and `evidence` (what the check
 found). Use them to put the finding at its place in the list, said the way a person would find
@@ -146,6 +147,9 @@ Before you describe a picture or draft its alt text, look at it: `show_asset` wi
 finding's `locator` returns the picture itself (for a PDF page, every picture the page draws).
 One picture at a time, describe what you see, then Decorative or a DRAFT. A drawing made of
 shapes cannot be shown; `show_asset` says so, and you look for it on the page instead.
+
+Read every page through `extract_content`: it gives each page's words and objects in order,
+under the scan's place names, so *Reading every page* has the words to read.
 
 <!-- /variant:tool -->
 <!-- variant:run-code -->
@@ -452,6 +456,30 @@ ids in `apply` in the second `fix_document` call. Never pass a fix id the owner 
 
 PDFs: the tool sets the title and the language. Nothing else. An untagged PDF goes back to its
 source, in the words of the PDF passage in `references/checks.md`.
+
+**Rebuilding a PDF with no source.** Only when the source is gone, the person asks for it, and
+you can write files and run code. The tool never tags an existing PDF; it helps you make a new
+one and checks it:
+
+1. **Not someone else's book.** A publisher's chapter or an article is not the person's to copy.
+   Send third-party material to the campus disability services office, which rebuilds it under
+   accessibility exemptions, and stop there.
+2. **Build from `extract_content`, never from memory or a summary.** Write it as plain, semantic
+   HTML: real headings, lists, tables with header cells, links named for where they go, every
+   picture (from `show_asset`) with confirmed alt text or marked decorative, and fill-in fields
+   with labels. Every heading level, header row and alt text is the author's yes, one by one, as
+   *Drafts and proposals* says. Export it to a tagged PDF (WeasyPrint with `pdf_variant`
+   `pdf/ua-1`, or LibreOffice's tagged PDF export) as `<name>.rebuilt.pdf` beside the original.
+3. **Check it with `compare_rebuild`** before you call it anything. Report every problem it
+   lists; every missing or added word is shown verbatim, and none is yours to wave away. A
+   running header or footer you deliberately did not repeat may go in `ignore`; say that you did.
+4. **Show it.** Put the original and the rebuild side by side, page by page, before the person
+   accepts it: the rebuild is plainer, and they decide whether that is acceptable.
+5. **A scanned original** has no text to compare against: say that a person must read the
+   rebuild against the scan, page by page, and that until they have, the words are unchecked.
+
+Say what `compare_rebuild` gives as `claim`, word for word or shorter. A rebuild is a structured
+copy whose content was checked against the original; it is never a conformance claim.
 
 <!-- /variant:tool-fix -->
 ## The report

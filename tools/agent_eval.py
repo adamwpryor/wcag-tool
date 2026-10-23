@@ -52,6 +52,8 @@ ALLOWED_TOOLS = [
     "mcp__wcag-tool__scan_folder",
     "mcp__wcag-tool__fix_document",
     "mcp__wcag-tool__show_asset",
+    "mcp__wcag-tool__extract_content",
+    "mcp__wcag-tool__compare_rebuild",
     "mcp__wcag-tool__describe_routes",
     "mcp__wcag-tool__explain_criterion",
     "Read",
