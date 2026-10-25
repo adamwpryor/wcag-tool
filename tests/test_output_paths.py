@@ -110,7 +110,20 @@ def test_a_folder_that_does_not_exist_is_not_created_by_an_output_path(bad_docx:
     assert not (bad_docx.parent / "new").exists()
 
 
-@pytest.mark.parametrize("name", ["notes.docx", ".bashrc", "x.remediated.txt", "x.remediated"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "notes.docx",
+        ".bashrc",
+        "x.remediated.txt",
+        "x.remediated",
+        # near misses: the mark has to be the whole of the last-but-one part of the name
+        "a.remediatedX.docx",
+        "a.remediated-old.docx",
+        "remediated.docx",
+        "x.remediated.docx.bak",
+    ],
+)
 def test_a_name_that_is_not_a_remediated_copy_is_refused(bad_docx: Path, name: str) -> None:
     target = bad_docx.parent / name
     target.write_bytes(SENTINEL)
@@ -131,6 +144,14 @@ def test_the_original_is_never_the_output_even_with_overwrite(bad_docx: Path) ->
 def test_a_named_copy_inside_the_folder_is_allowed(bad_docx: Path) -> None:
     record = engine.fix(bad_docx, output=Path("my.remediated.docx"))
     assert Path(record["output"]) == (bad_docx.parent / "my.remediated.docx").resolve()
+
+
+def test_the_name_rule_ignores_the_case_of_the_extension(tmp_path: Path) -> None:
+    from wcag_tool.demo import make_bad_docx
+
+    original = make_bad_docx(tmp_path / "Upper.DOCX")
+    copy = Path(engine.fix(original, output=Path("Upper.remediated.DOCX"))["output"])
+    assert copy.name == "Upper.remediated.DOCX"
 
 
 # --- overwrite -------------------------------------------------------------------------------
@@ -173,6 +194,14 @@ def test_a_taken_record_name_stops_the_run_before_anything_is_written(bad_docx: 
     assert not (bad_docx.parent / "bad_syllabus.remediated.docx").exists()
 
 
+def test_a_clean_run_leaves_only_the_copy_and_its_record(bad_docx: Path) -> None:
+    before = {p.name for p in bad_docx.parent.iterdir()}
+    engine.fix(bad_docx)
+    engine.fix(bad_docx, overwrite=True)
+    added = {p.name for p in bad_docx.parent.iterdir()} - before
+    assert added == {"bad_syllabus.remediated.docx", "bad_syllabus.remediated.remediation.json"}
+
+
 def test_overwrite_does_not_replace_a_directory(bad_docx: Path) -> None:
     (bad_docx.parent / "bad_syllabus.remediated.docx").mkdir()
     with pytest.raises(outputs.OutputPathError, match="regular file"):
@@ -192,6 +221,37 @@ def test_a_failed_fix_leaves_no_half_written_copy(
     with pytest.raises(RuntimeError):
         engine.fix(bad_docx)
     assert _tree(bad_docx.parent) == before
+
+
+def _failing_fixer(monkeypatch: pytest.MonkeyPatch, *, writes: bytes | None) -> None:
+    """Swap the .docx fixer for one that fails: raising at once, or after writing ``writes``."""
+    scanner, _ = engine._HANDLERS[".docx"]
+
+    def broken(_path: Path, _ids: list[str], output: Path, *_rest: object) -> dict:
+        if writes is not None:
+            output.write_bytes(writes)
+            return {"applied": {}, "failed": {}}
+        raise RuntimeError("the fixer failed")
+
+    monkeypatch.setitem(engine._HANDLERS, ".docx", (scanner, broken))
+
+
+@pytest.mark.parametrize("writes", [None, b"not a document"], ids=["fixer-raises", "bad-output"])
+def test_a_failed_overwrite_leaves_the_earlier_copy_and_record_as_they_were(
+    bad_docx: Path, monkeypatch: pytest.MonkeyPatch, writes: bytes | None
+) -> None:
+    first = engine.fix(bad_docx, language="en-US")
+    copy = Path(first["output"])
+    record = copy.with_suffix(".remediation.json")
+    kept = (copy.read_bytes(), record.read_bytes())
+    before = _tree(bad_docx.parent)
+
+    _failing_fixer(monkeypatch, writes=writes)
+    with pytest.raises(Exception):  # noqa: B017,PT011 - the fixer's own error, or the parser's
+        engine.fix(bad_docx, overwrite=True)
+
+    assert (copy.read_bytes(), record.read_bytes()) == kept
+    assert _tree(bad_docx.parent) == before  # and no temporary folder is left behind
 
 
 # --- links -----------------------------------------------------------------------------------

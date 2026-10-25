@@ -111,8 +111,8 @@ def fix_document(
     Args:
         path: The file to remediate.
         apply: Fix ids a person has confirmed, taken from a prior scan result.
-        output_path: A file name for the copy, inside that folder, containing
-            `.remediated` and ending in the original's extension. Defaults to
+        output_path: A file name for the copy, inside that folder, ending in
+            `.remediated` plus the original's extension. Defaults to
             <name>.remediated.<ext>. Leave it unset: a path that leaves the folder, a
             link, or the original itself is refused.
         language: Language code for set-language, e.g. en-US or es-ES, as named

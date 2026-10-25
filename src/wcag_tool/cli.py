@@ -49,7 +49,7 @@ def _parser() -> argparse.ArgumentParser:
         "--output",
         type=_path,
         default=None,
-        help="file name for the copy, inside the output folder; it must contain .remediated",
+        help="file name for the copy, inside the output folder; it must end in .remediated.<ext>",
     )
     fix.add_argument(
         "--out-dir",

@@ -181,9 +181,9 @@ def fix(
         path: The original file. Never overwritten.
         apply: Fix ids a person has confirmed, taken from a prior scan. Pass
             ``[]`` or nothing to apply only the Route 1 defaults.
-        output: A name for the copy, inside the output folder, containing ``.remediated``
-            and ending in the original's extension. Defaults to ``<stem>.remediated<suffix>``.
-            Must not be the original.
+        output: A name for the copy, inside the output folder, ending in ``.remediated``
+            plus the original's extension. Defaults to ``<stem>.remediated<suffix>``. Must
+            not be the original.
         language: Language code for ``set-language`` (``en-US``, ``es-ES``). When
             omitted, ``set-language`` is reported under ``held`` and left open.
         title: The title the person named for ``set-title``. When omitted, the title is
@@ -191,8 +191,8 @@ def fix(
             the applied note says where it came from and asks for a check.
         out_dir: The one folder the copy and record may be written to. Defaults to
             ``WCAG_TOOL_OUT_DIR`` if set, else the original's folder.
-        overwrite: Replace a copy and record the tool wrote earlier under the same name.
-            Without it, an existing file is never replaced.
+        overwrite: Replace a copy and record the tool wrote earlier under the same name,
+            once the new fix has worked. Without it, an existing file is never replaced.
 
     Returns:
         A record: paths, ``applied``, ``failed``, ``unknown_fix_ids``, ``held``,
@@ -232,13 +232,9 @@ def fix(
     unknown = [r for r in requested if r not in matched]
 
     named_title = (title or "").strip() or None
-    claimed: list[Path] = []
-    try:
-        for target in (out, record_path):
-            outputs.claim(target, overwrite=overwrite)
-            claimed.append(target)
-        result = fixer(path, to_apply, out, language or "en-US", named_title)
-        after = scan(out)
+    with outputs.staged(out, record_path, overwrite=overwrite) as (staged_copy, staged_record):
+        result = fixer(path, to_apply, staged_copy, language or "en-US", named_title)
+        after = scan(staged_copy)
 
         record = {
             "original": str(path),
@@ -253,11 +249,7 @@ def fix(
             "before": before.to_dict(),
             "after": after.to_dict(),
         }
-        record_path.write_text(json.dumps(record, indent=2), encoding="utf-8")
-    except BaseException:
-        for target in claimed:  # a failed fix leaves no half-written copy behind
-            target.unlink(missing_ok=True)
-        raise
+        staged_record.write_text(json.dumps(record, indent=2), encoding="utf-8")
     logger.info(
         "fixed",
         extra={
