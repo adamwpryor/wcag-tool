@@ -11,6 +11,9 @@ dependencies:
   - ruff
   - black
   - mypy
+  - pip-audit>=2.10
+  # conda-forge's pip-audit leaves out the filelock that its HTTP cache imports.
+  - filelock
   - pip
   - pip:
       # The MCP Python SDK publishes to PyPI first. Move it to the conda-forge

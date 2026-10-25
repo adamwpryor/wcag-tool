@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff", "black", "mypy", "jsonschema>=4.20"]
+dev = ["pytest>=8", "ruff", "black", "mypy", "jsonschema>=4.20", "pip-audit>=2.10"]
 
 [project.scripts]
 wcag-tool = "wcag_tool.cli:main"
