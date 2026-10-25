@@ -191,8 +191,16 @@ In Claude Code, put this in the project's `.claude/settings.json`:
 
 The tool never overwrites a file: it writes a fixed copy beside the original (or in the one folder
 you name with `--out-dir` or the `WCAG_TOOL_OUT_DIR` setting), with a record of what changed. It
-stops, rather than replace, a copy that is already there unless it is told to with `--overwrite`. An agent can still change a file by other means, such as a script of its own, so
-if it offers to "just fix" a course file directly, say no and ask it to use the tool.
+stops, rather than replace, a copy that is already there unless it is told to with `--overwrite`.
+An agent can still change a file by other means, such as a script of its own, so if it offers to
+"just fix" a course file directly, say no and ask it to use the tool.
+
+It also refuses files that are unreasonably large, so a bad download cannot stall it: over 50 MB,
+a Word or PowerPoint file that would unpack to more than 200 MB (or has a part that compresses
+suspiciously well), or a PDF of more than 500 pages. The reply says which limit it hit. Raise a
+limit with `WCAG_TOOL_MAX_FILE_MB` or `WCAG_TOOL_MAX_PDF_PAGES` (also `WCAG_TOOL_MAX_ZIP_MEMBERS`,
+`WCAG_TOOL_MAX_ZIP_UNCOMPRESSED_MB`, `WCAG_TOOL_MAX_ZIP_RATIO`, `WCAG_TOOL_MAX_PDF_OBJECTS`) in
+the same place you set up the tool.
 
 **Any other assistant** that runs local MCP servers (Cursor and VS Code among them) takes the same
 command and arguments; look for its MCP settings.

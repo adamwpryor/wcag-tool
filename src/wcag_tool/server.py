@@ -15,7 +15,7 @@ from mcp.server import MCPServer
 from mcp.server.mcpserver import Image
 from mcp.server.mcpserver.exceptions import ToolError
 
-from wcag_tool import assets, compare, content, engine, log, outputs, rules
+from wcag_tool import assets, compare, content, engine, limits, log, outputs, rules
 from wcag_tool.findings import ROUTES_SUMMARY
 from wcag_tool.report import Batch, worklist_fields
 
@@ -46,6 +46,10 @@ INSTRUCTIONS = (
 
 mcp = MCPServer("wcag-tool", instructions=INSTRUCTIONS)
 
+# Refusals the model should read and relay: a plain ToolError shows its message, any other
+# exception reaches the model only as "Error executing tool".
+_REFUSALS = (limits.InputLimitError, outputs.OutputPathError)
+
 
 def _path(text: str) -> Path:
     """A path as a person or a model writes it, with ``~`` meaning the home folder."""
@@ -68,7 +72,10 @@ def scan_document(path: str) -> dict[str, Any]:
     Args:
         path: Absolute or relative path to the file on this machine.
     """
-    report = engine.scan(_path(path))
+    try:
+        report = engine.scan(_path(path))
+    except _REFUSALS as exc:
+        raise ToolError(str(exc)) from exc
     return {**report.to_dict(), **worklist_fields(Batch(reports=[report]))}
 
 
@@ -125,10 +132,8 @@ def fix_document(
             title=title,
             overwrite=overwrite,
         )
-    except outputs.OutputPathError as exc:
-        raise ToolError(
-            str(exc)
-        ) from exc  # shown to the model, so it can say why nothing was written
+    except _REFUSALS as exc:
+        raise ToolError(str(exc)) from exc
 
 
 @mcp.tool()
@@ -166,7 +171,7 @@ def show_asset(path: str, locator: str) -> list[str | Image]:
     """
     try:
         pictures = assets.extract(_path(path), locator)
-    except assets.AssetError as error:
+    except (assets.AssetError, limits.InputLimitError) as error:
         return [str(error)]
     out: list[str | Image] = []
     for picture in pictures:
@@ -189,7 +194,10 @@ def extract_content(path: str) -> dict[str, Any]:
     Args:
         path: The course file on this machine.
     """
-    return content.extract(_path(path))
+    try:
+        return content.extract(_path(path))
+    except limits.InputLimitError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 @mcp.tool()
@@ -213,7 +221,10 @@ def compare_rebuild(original: str, rebuilt: str, ignore: list[str] | None = None
             footer the rebuild does not repeat on every page. Tell the person what you
             left out.
     """
-    return compare.compare(_path(original), _path(rebuilt), ignore)
+    try:
+        return compare.compare(_path(original), _path(rebuilt), ignore)
+    except limits.InputLimitError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 @mcp.tool()

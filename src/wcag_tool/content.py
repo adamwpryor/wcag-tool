@@ -30,6 +30,7 @@ from pptx.shapes.base import BaseShape
 from pptx.shapes.group import GroupShape
 from pypdf import PdfReader
 
+from wcag_tool import limits
 from wcag_tool.docx_checks import style_name
 from wcag_tool.pdf_checks import drawn_images
 
@@ -246,6 +247,7 @@ def _pptx(path: Path) -> dict[str, Any]:
 
 def _pdf(path: Path) -> dict[str, Any]:
     reader = PdfReader(str(path))
+    limits.check_pdf(reader, path.name)
     root = reader.root_object
     mark = root.get("/MarkInfo")
     marked = mark.get_object().get("/Marked") if mark is not None else None
@@ -310,10 +312,12 @@ def extract(path: Path) -> dict[str, Any]:
         field, notes, header or footer text).
 
     Raises:
-        ValueError: For a file type other than .docx, .pptx or .pdf.
+        ValueError: For a file type other than .docx, .pptx or .pdf, or (as
+            ``limits.InputLimitError``) a file over a size, package or page limit.
     """
     suffix = path.suffix.lower()
     readers = {".docx": _docx, ".pptx": _pptx, ".pdf": _pdf}
     if suffix not in readers:
         raise ValueError(f"Unsupported file type {suffix!r}: expected .docx, .pptx or .pdf.")
+    limits.preflight(path)
     return {"file": path.name, "format": suffix[1:], **readers[suffix](path)}

@@ -102,6 +102,8 @@ wcag-tool scan ./sample                # routed table with Route 5 lines; --list
 | `findings.py` | `Finding` (built with `Finding.from_check`), `Report`, the routes and closure enums, the bounded claim |
 | `report.py` | `Batch` (a pile), Route 5 aggregation, `render_markdown` (the routed table, working data), `render_worklist` and `worklist_fields` (the six-part plain-words work order and its number-to-fix-id map, returned by both scan tools) |
 | `engine.py` | dispatch by extension, `scan`, `scan_many`, `scan_folder`, `fix` |
+| `outputs.py` | where `fix` may write: one allowed folder, `*.remediated.<ext>` names, no replacing or following links unless `overwrite` |
+| `limits.py` | pre-flight ceilings before any parser opens a file: size, zip-bomb checks for DOCX/PPTX, PDF pages and objects (env-configurable) |
 | `docx_checks.py` / `docx_fixes.py`, `pptx_checks.py`, `pdf_checks.py` | per-format checks and fixes |
 | `alt.py` | alt text that is present but says nothing (filenames, auto phrases) |
 | `demo.py` | minimal fictional fixture files, shared by tests, the selftest and the `demo` command |

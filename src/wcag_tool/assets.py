@@ -25,6 +25,7 @@ from pptx.shapes.group import GroupShape
 from pptx.shapes.picture import Picture as PptxPicture
 from pypdf import PdfReader
 
+from wcag_tool import limits
 from wcag_tool.pdf_checks import drawn_images
 
 # The longest side a returned picture keeps. Enough to judge what it shows; small
@@ -126,6 +127,7 @@ def _pdf(path: Path, locator: str) -> list[Picture]:
     first = int(match.group(1))
     last = int(match.group(2) or first)
     reader = PdfReader(str(path))
+    limits.check_pdf(reader, path.name)
     if not 1 <= first <= last <= len(reader.pages):
         raise AssetError(f"{path.name} has pages 1 to {len(reader.pages)}.")
     out: list[Picture] = []
@@ -164,8 +166,11 @@ def extract(path: Path, locator: str) -> list[Picture]:
 
     Raises:
         AssetError: If the locator names no picture this tool can return.
+        limits.InputLimitError: If the file is over a size, package or page limit.
     """
     suffix = path.suffix.lower()
+    if suffix in (".docx", ".pptx", ".pdf"):
+        limits.preflight(path)
     if suffix == ".docx":
         return _docx(path, locator)
     if suffix == ".pptx":

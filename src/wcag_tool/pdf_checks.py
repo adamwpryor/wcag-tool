@@ -25,7 +25,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 
-from wcag_tool import rules
+from wcag_tool import limits, rules
 from wcag_tool.findings import Finding, Report
 
 # Both lists come from rules/coverage.json; edit them there.
@@ -155,6 +155,7 @@ def scan(path: Path) -> Report:
         The report.
     """
     reader = PdfReader(str(path))
+    limits.check_pdf(reader, path.name)
     asset = path.name
     report = Report.for_format(asset, "pdf")
     f = report.findings

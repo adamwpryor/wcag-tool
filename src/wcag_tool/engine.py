@@ -14,7 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from wcag_tool import docx_checks, docx_fixes, outputs, pdf_checks, pptx_checks
+from wcag_tool import docx_checks, docx_fixes, limits, outputs, pdf_checks, pptx_checks
 from wcag_tool.findings import Report, Route
 from wcag_tool.report import Batch
 
@@ -57,10 +57,12 @@ def scan(path: Path) -> Report:
     Raises:
         FileNotFoundError: If the path does not exist.
         UnsupportedFormatError: If the extension is not handled.
+        limits.InputLimitError: If the file is over a size, package or page limit.
     """
     if not path.is_file():
         raise FileNotFoundError(str(path))
     scanner, _ = _handlers(path)
+    limits.preflight(path)
     report = scanner(path)
     logger.info(
         "scanned",
@@ -88,7 +90,7 @@ def scan_many(paths: list[Path]) -> Batch:
     for path in paths:
         try:
             batch.reports.append(scan(path))
-        except (FileNotFoundError, UnsupportedFormatError) as exc:
+        except (FileNotFoundError, UnsupportedFormatError, limits.InputLimitError) as exc:
             batch.skipped.append({"path": str(path), "reason": str(exc)})
         except Exception as exc:  # a corrupt file must not stop the pile
             logger.warning("skipped", extra={"data": {"path": str(path), "error": repr(exc)}})
