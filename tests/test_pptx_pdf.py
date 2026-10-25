@@ -20,7 +20,7 @@ def test_pptx_scan_and_fix(bad_pptx: Path) -> None:
     after = {f["check"] for f in record["after"]["findings"]}
     assert after == {"pptx.slide-no-title", "pptx.image-missing-alt", "pptx.table-no-header"}
     header_fix = next(f.fix_id for f in report.findings if f.check == "pptx.table-no-header")
-    record = engine.fix(bad_pptx, apply=[header_fix])
+    record = engine.fix(bad_pptx, apply=[header_fix], overwrite=True)
     assert header_fix in record["applied"]
     after = {f["check"] for f in record["after"]["findings"]}
     assert "pptx.table-no-header" not in after

@@ -13,7 +13,7 @@ import logging
 import sys
 from pathlib import Path
 
-from wcag_tool import __version__, engine, log
+from wcag_tool import __version__, engine, log, outputs
 from wcag_tool.demo import make_demo_set
 from wcag_tool.report import render_markdown, render_worklist
 
@@ -45,7 +45,24 @@ def _parser() -> argparse.ArgumentParser:
     fix = sub.add_parser("fix", help="write a remediated copy of one file and a JSON record")
     fix.add_argument("path", type=_path)
     fix.add_argument("--apply", action="append", default=[], metavar="FIX_ID")
-    fix.add_argument("--output", type=_path, default=None)
+    fix.add_argument(
+        "--output",
+        type=_path,
+        default=None,
+        help="file name for the copy, inside the output folder; it must contain .remediated",
+    )
+    fix.add_argument(
+        "--out-dir",
+        type=_path,
+        default=None,
+        help="the one folder the copy and record are written to (default: WCAG_TOOL_OUT_DIR, "
+        "else the original's folder)",
+    )
+    fix.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="replace a copy and record this tool wrote earlier; nothing else is replaced",
+    )
     fix.add_argument(
         "--language",
         default=None,
@@ -111,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
                 output=args.output,
                 language=args.language,
                 title=args.title,
+                out_dir=args.out_dir,
+                overwrite=args.overwrite,
             )
             _write(json.dumps(record, indent=2))
             return 0
@@ -118,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
             for path in make_demo_set(args.directory):
                 _write(str(path))
             return 0
-    except (FileNotFoundError, engine.UnsupportedFormatError) as exc:
+    except (FileNotFoundError, engine.UnsupportedFormatError, outputs.OutputPathError) as exc:
         sys.stderr.write(f"wcag-tool: {exc}\n")
         return 2
     return 1

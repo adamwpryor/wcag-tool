@@ -13,8 +13,9 @@ from typing import Any
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver import Image
+from mcp.server.mcpserver.exceptions import ToolError
 
-from wcag_tool import assets, compare, content, engine, log, rules
+from wcag_tool import assets, compare, content, engine, log, outputs, rules
 from wcag_tool.findings import ROUTES_SUMMARY
 from wcag_tool.report import Batch, worklist_fields
 
@@ -78,6 +79,7 @@ def fix_document(
     output_path: str | None = None,
     language: str | None = None,
     title: str | None = None,
+    overwrite: bool = False,
 ) -> dict[str, Any]:
     """Write a remediated copy of the file and a JSON record of before and after.
 
@@ -93,26 +95,40 @@ def fix_document(
     has confirmed that proposal by itself. A yes to a batch ("yes to all") is a
     yes to nothing: ask for each one, and pass only the ids confirmed one by one.
     An id that matches no finding is returned in
-    `unknown_fix_ids` and not applied. The original is never overwritten. Read
-    back `applied`, `failed`, `unknown_fix_ids` and `held` before reporting.
+    `unknown_fix_ids` and not applied. The original is never overwritten, and nor is
+    any other file: the copy is written only into the folder the person configured (the
+    original's own folder unless they set another), and a copy that already exists makes
+    the call fail unless `overwrite` is true. Read back `applied`, `failed`,
+    `unknown_fix_ids` and `held` before reporting.
 
     Args:
         path: The file to remediate.
         apply: Fix ids a person has confirmed, taken from a prior scan result.
-        output_path: Where to write the copy. Defaults to <name>.remediated.<ext>.
-            Leave it unset; it must never be the original.
+        output_path: A file name for the copy, inside that folder, containing
+            `.remediated` and ending in the original's extension. Defaults to
+            <name>.remediated.<ext>. Leave it unset: a path that leaves the folder, a
+            link, or the original itself is refused.
         language: Language code for set-language, e.g. en-US or es-ES, as named
             by the person who owns the file.
         title: The document title, as the person named it, e.g. "ENVS 210 Syllabus,
             Fall 2026". Used exactly as given.
+        overwrite: Set true only to replace the copy this tool wrote earlier for the same
+            file, as when applying confirmed proposals after the first run. It never
+            replaces anything but a `*.remediated.*` file and its record in that folder.
     """
-    return engine.fix(
-        _path(path),
-        apply=apply,
-        output=_path(output_path) if output_path else None,
-        language=language,
-        title=title,
-    )
+    try:
+        return engine.fix(
+            _path(path),
+            apply=apply,
+            output=_path(output_path) if output_path else None,
+            language=language,
+            title=title,
+            overwrite=overwrite,
+        )
+    except outputs.OutputPathError as exc:
+        raise ToolError(
+            str(exc)
+        ) from exc  # shown to the model, so it can say why nothing was written
 
 
 @mcp.tool()

@@ -441,7 +441,8 @@ edit (*"Title: 'ENVS 210 Syllabus, Fall 2026'?"*). A file in a language the owne
 keeps its language item open; you never pass a language you guessed. Then run `fix_document`
 with `path`, `language` and the confirmed `title`. That applies the settings repairs, writes a
 copy beside the original, re-scans the copy, and leaves a JSON record. Never pass `output_path`;
-the tool chooses the copy's name and refuses to overwrite the original.
+the tool chooses the copy's name, writes it only beside the original, and refuses to overwrite
+the original or a copy that is already there unless `overwrite` is true.
 
 Read the record back by its fields: `applied` (with the tool's note on each; a title nobody
 named says where it was taken from, and you show it and ask), `failed` (every entry, verbatim),
@@ -454,7 +455,8 @@ read *Who: me, in the copy · Finished when: you've opened the copy and seen it.
 Then the proposals, as *Drafts and proposals* says. Ask for each yes by the item's number and
 what it changes (*"Item 4: mark the first row of the schedule table as its header row?"*), never
 as a batch. Each yes maps to that item's `fix_id` in `worklist_items`; pass exactly the confirmed
-ids in `apply` in the second `fix_document` call. Never pass a fix id the owner has not confirmed one by one.
+ids in `apply` in the second `fix_document` call, with `overwrite` true: it rebuilds the copy from
+the untouched original and replaces the first call's copy and record, and nothing else. Never pass a fix id the owner has not confirmed one by one.
 
 PDFs: the tool sets the title and the language. Nothing else. An untagged PDF goes back to its
 source, in the words of the PDF passage in `references/checks.md`.

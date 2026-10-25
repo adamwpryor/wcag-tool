@@ -2,7 +2,8 @@
 
 The original file is never overwritten. The remediated copy sits beside it with
 ``.remediated`` in the name, and a JSON record of the before and after findings
-sits beside that. That record is the evidence a Route 1 closure needs.
+sits beside that. That record is the evidence a Route 1 closure needs. Where the copy
+may go, and when an existing file may be replaced, is decided in ``outputs``.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from wcag_tool import docx_checks, docx_fixes, pdf_checks, pptx_checks
+from wcag_tool import docx_checks, docx_fixes, outputs, pdf_checks, pptx_checks
 from wcag_tool.findings import Report, Route
 from wcag_tool.report import Batch
 
@@ -164,6 +165,8 @@ def fix(
     output: Path | None = None,
     language: str | None = None,
     title: str | None = None,
+    out_dir: Path | None = None,
+    overwrite: bool = False,
 ) -> dict[str, Any]:
     """Apply fixes to a copy of the file, re-scan it, and write a record.
 
@@ -176,13 +179,18 @@ def fix(
         path: The original file. Never overwritten.
         apply: Fix ids a person has confirmed, taken from a prior scan. Pass
             ``[]`` or nothing to apply only the Route 1 defaults.
-        output: Where to write the copy. Defaults to ``<stem>.remediated<suffix>``.
+        output: A name for the copy, inside the output folder, containing ``.remediated``
+            and ending in the original's extension. Defaults to ``<stem>.remediated<suffix>``.
             Must not be the original.
         language: Language code for ``set-language`` (``en-US``, ``es-ES``). When
             omitted, ``set-language`` is reported under ``held`` and left open.
         title: The title the person named for ``set-title``. When omitted, the title is
             taken from the file (a heading, the first slide title, or the file name) and
             the applied note says where it came from and asks for a check.
+        out_dir: The one folder the copy and record may be written to. Defaults to
+            ``WCAG_TOOL_OUT_DIR`` if set, else the original's folder.
+        overwrite: Replace a copy and record the tool wrote earlier under the same name.
+            Without it, an existing file is never replaced.
 
     Returns:
         A record: paths, ``applied``, ``failed``, ``unknown_fix_ids``, ``held``,
@@ -190,15 +198,15 @@ def fix(
         and after reports.
 
     Raises:
-        ValueError: If ``output`` resolves to the original file.
+        outputs.OutputPathError: A ``ValueError``. If ``output`` is the original, is outside
+            the output folder, is not named like a remediated copy, goes through a link, or
+            names a file that already exists and ``overwrite`` is not set.
     """
     before = scan(path)
     _, fixer = _handlers(path)
     requested = list(dict.fromkeys(apply or []))
 
-    out = output or path.with_name(f"{path.stem}.remediated{path.suffix}")
-    if out.resolve() == path.resolve():
-        raise ValueError("output must differ from the original; the original is never overwritten")
+    out, record_path = outputs.resolve_output(path, output, out_dir, overwrite=overwrite)
 
     to_apply: list[str] = []
     held: list[dict[str, Any]] = []
@@ -222,24 +230,32 @@ def fix(
     unknown = [r for r in requested if r not in matched]
 
     named_title = (title or "").strip() or None
-    result = fixer(path, to_apply, out, language or "en-US", named_title)
-    after = scan(out)
+    claimed: list[Path] = []
+    try:
+        for target in (out, record_path):
+            outputs.claim(target, overwrite=overwrite)
+            claimed.append(target)
+        result = fixer(path, to_apply, out, language or "en-US", named_title)
+        after = scan(out)
 
-    record = {
-        "original": str(path),
-        "output": str(out),
-        "language": language,
-        "title": named_title,
-        "applied": result["applied"],
-        "failed": result["failed"],
-        "unknown_fix_ids": unknown,
-        "held": held,
-        "needs_person": [_open_finding(f) for f in after.findings],
-        "before": before.to_dict(),
-        "after": after.to_dict(),
-    }
-    record_path = out.with_suffix(".remediation.json")
-    record_path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+        record = {
+            "original": str(path),
+            "output": str(out),
+            "language": language,
+            "title": named_title,
+            "applied": result["applied"],
+            "failed": result["failed"],
+            "unknown_fix_ids": unknown,
+            "held": held,
+            "needs_person": [_open_finding(f) for f in after.findings],
+            "before": before.to_dict(),
+            "after": after.to_dict(),
+        }
+        record_path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    except BaseException:
+        for target in claimed:  # a failed fix leaves no half-written copy behind
+            target.unlink(missing_ok=True)
+        raise
     logger.info(
         "fixed",
         extra={

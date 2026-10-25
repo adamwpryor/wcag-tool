@@ -53,8 +53,10 @@ sponsor material, or anything from a real course file.
    `routes.md`: deterministic, invents no meaning, reversible and re-scannable, cannot alter an
    assessment. Everything else is Route 2 with a `proposal`, applied only when its `fix_id` is
    named in `apply`.
-3. **The original file is never overwritten.** `engine.fix` writes `<stem>.remediated<ext>` and a
-   `.remediation.json` record beside it.
+3. **The original file is never overwritten, and neither is anything else.** `engine.fix` writes
+   `<stem>.remediated<ext>` and a `.remediation.json` record into one allowed folder (beside the
+   original unless `out_dir` or `WCAG_TOOL_OUT_DIR` says otherwise), under the naming and
+   no-replace rules in `outputs.py`; replacing an earlier copy needs `overwrite`.
 4. **The tool never tags an existing PDF.** It says so in the words from `checks.md`, and no
    fix may imply otherwise. For a PDF with no source, an agent may rebuild it from
    `extract_content` into a new tagged file beside the original; `compare_rebuild` checks that
